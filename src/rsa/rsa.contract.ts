@@ -1,0 +1,48 @@
+import { ApiProperty } from "@nestjs/swagger";
+import { DefaultResponse } from "src/app.contract";
+
+export class GenerateEValueRequest {
+  @ApiProperty()
+  pValue: number;
+
+  @ApiProperty()
+  qValue: number;
+
+  @ApiProperty({ default: 10 })
+  total: number;
+}
+
+export class GenerateKeyRequest {
+  @ApiProperty({ default: 49 })
+  eValue: number;
+
+  @ApiProperty({ default: 713 })
+  nValue: number;
+
+  @ApiProperty({ default: 660 })
+  toitent: number;
+}
+
+export class EncryptRequest {
+  @ApiProperty()
+  plaintext: string;
+}
+
+export class GenerateEValueResponse {
+  @ApiProperty()
+  nValue: number;
+
+  @ApiProperty()
+  toitent: number;
+
+  @ApiProperty()
+  eValues: number[];
+}
+
+export class GenerateKeyResponse {
+  @ApiProperty()
+  publicKey: PublicKey;
+
+  @ApiProperty()
+  privateKey: PrivateKey;
+}
