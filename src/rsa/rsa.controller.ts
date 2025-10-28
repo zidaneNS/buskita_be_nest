@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query } from '@nestjs/common';
 import { RsaService } from './rsa.service';
-import { EncryptRequest, GenerateEValueRequest, GenerateEValueResponse, GenerateKeyRequest, GenerateKeyResponse } from './rsa.contract';
+import { DecryptRequest, EncryptRequest, GenerateEValueRequest, GenerateEValueResponse, GenerateKeyRequest, GenerateKeyResponse } from './rsa.contract';
 import { DefaultResponse } from 'src/app.contract';
 
 
@@ -23,5 +23,10 @@ export class RsaController {
   @Get('/encrypt')
   encrypt(@Query() query: EncryptRequest): DefaultResponse<any> {
     return this.rsaService.encrypt(query);
+  }
+
+  @Get('/decrypt')
+  decrypt(@Query() query: DecryptRequest): DefaultResponse<any> {
+    return this.rsaService.decrypt(query);
   }
 }

@@ -2,8 +2,9 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import isPrime from 'src/helper/isPrime';
 import isPrimeRelative from 'src/helper/isPrimeRelative';
 import responseTemplate from 'src/helper/responseTemplate';
-import { EncryptRequest, GenerateEValueRequest, GenerateEValueResponse, GenerateKeyRequest, GenerateKeyResponse } from './rsa.contract';
+import { DecryptRequest, EncryptRequest, GenerateEValueRequest, GenerateEValueResponse, GenerateKeyRequest, GenerateKeyResponse } from './rsa.contract';
 import { DefaultResponse } from 'src/app.contract';
+import modPow from 'src/helper/modPow';
 
 @Injectable()
 export class RsaService {
@@ -87,11 +88,35 @@ export class RsaService {
     const plainArray = plaintext.split('');
     const cipherText = plainArray.map(char => {
       const asciiCode = char.charCodeAt(0);
-      const cipher = (BigInt(asciiCode) ** BigInt(eValue)) % BigInt(nValue);
-      console.log(cipher);
+      const cipher = modPow(asciiCode, eValue, nValue);
       return cipher.toString().padStart(totalPad, '0');
     });
 
-    return responseTemplate(HttpStatus.OK, 'ascii code', cipherText);
+    return responseTemplate(HttpStatus.OK, 'ascii code', cipherText.join(''));
+  }
+
+  decrypt(query: DecryptRequest) {
+    const {ciphertext} = query;
+    const {dValue, nValue} = this.getPrivateKey();
+
+    const totalPad = nValue.toString().split('').length;
+
+    const splittedCipher: string[] = [];
+    let mBlock: string[] = [];
+    ciphertext.split('').forEach(char => {
+      mBlock.push(char);
+      if (mBlock.length === totalPad) {
+        splittedCipher.push(mBlock.join(''));
+        mBlock = [];
+      }
+    });
+
+    const decrypted = splittedCipher.map(cipher => {
+      const asciiCipher = parseInt(cipher);
+      const asciiPlain = modPow(asciiCipher, dValue, nValue);
+      return String.fromCharCode(asciiPlain);
+    })
+
+    return responseTemplate(HttpStatus.OK, 'decrypted', decrypted.join(''));
   }
 }

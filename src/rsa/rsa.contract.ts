@@ -1,5 +1,8 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { DefaultResponse } from "src/app.contract";
+
+export class RsaApiContract {
+  
+}
 
 export class GenerateEValueRequest {
   @ApiProperty()
@@ -26,6 +29,11 @@ export class GenerateKeyRequest {
 export class EncryptRequest {
   @ApiProperty()
   plaintext: string;
+}
+
+export class DecryptRequest {
+  @ApiProperty()
+  ciphertext: string;
 }
 
 export class GenerateEValueResponse {
