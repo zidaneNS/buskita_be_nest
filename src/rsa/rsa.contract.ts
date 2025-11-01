@@ -36,6 +36,22 @@ export class DecryptRequest {
   ciphertext: string;
 }
 
+export class ParseJSONRequest {
+  @ApiProperty({ default: '123' })
+  ticketId: string;
+
+  @ApiProperty({ default: 'zidane' })
+  name: string;
+
+  @ApiProperty({ default: '181221055' })
+  nim_nip: string;
+}
+
+export class ReturnJSONRequest {
+  @ApiProperty()
+  inputJSON: string;
+}
+
 export class GenerateEValueResponse {
   @ApiProperty()
   nValue: number;

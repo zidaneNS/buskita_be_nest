@@ -1,10 +1,10 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import isPrime from 'src/helper/isPrime';
-import isPrimeRelative from 'src/helper/isPrimeRelative';
-import responseTemplate from 'src/helper/responseTemplate';
-import { DecryptRequest, EncryptRequest, GenerateEValueRequest, GenerateEValueResponse, GenerateKeyRequest, GenerateKeyResponse } from './rsa.contract';
+import isPrime from 'src/helpers/isPrime';
+import isPrimeRelative from 'src/helpers/isPrimeRelative';
+import responseTemplate from 'src/helpers/responseTemplate';
+import { DecryptRequest, EncryptRequest, GenerateEValueRequest, GenerateEValueResponse, GenerateKeyRequest, GenerateKeyResponse, ParseJSONRequest, ReturnJSONRequest } from './rsa.contract';
 import { DefaultResponse } from 'src/app.contract';
-import modPow from 'src/helper/modPow';
+import modPow from 'src/helpers/modPow';
 
 @Injectable()
 export class RsaService {
@@ -86,13 +86,24 @@ export class RsaService {
     const totalPad = nValue.toString().split('').length;
 
     const plainArray = plaintext.split('');
+
+    const plainToAscii = plainArray.map(char => char.charCodeAt(0));
+    // const cipherArray = plainToAscii.map(ascii => modPow(ascii, eValue, nValue));
+    // const cipherText = cipherArray.map(cipher => cipher.toString().padStart(totalPad, '0'));
     const cipherText = plainArray.map(char => {
       const asciiCode = char.charCodeAt(0);
       const cipher = modPow(asciiCode, eValue, nValue);
       return cipher.toString().padStart(totalPad, '0');
     });
 
-    return responseTemplate(HttpStatus.OK, 'ascii code', cipherText.join(''));
+    // console.log('cipher', cipherText);
+
+    return responseTemplate(HttpStatus.OK, 'cipher text', {
+      // plainToAscii,
+      // cipherArray,
+      // cipherText,
+      result: cipherText.join('')
+    });
   }
 
   decrypt(query: DecryptRequest) {
@@ -115,8 +126,31 @@ export class RsaService {
       const asciiCipher = parseInt(cipher);
       const asciiPlain = modPow(asciiCipher, dValue, nValue);
       return String.fromCharCode(asciiPlain);
-    })
+    });
 
-    return responseTemplate(HttpStatus.OK, 'decrypted', decrypted.join(''));
+    // const decrypted = splittedCipher.map(cipher => modPow(parseInt(cipher), dValue, nValue));
+
+    // const plainText = decrypted.map(item => String.fromCharCode(item));
+
+    // console.log('json', plainText.join(''));
+
+    return responseTemplate(HttpStatus.OK, 'decrypted', {
+      // splittedCipher,
+      // decrypted,
+      // plainText,
+      result: decrypted.join(''),
+      // json: JSON.parse(plainText.join(''))
+    });
+  }
+
+  parseJSON(body: ParseJSONRequest) {
+    console.log(JSON.stringify(body));
+    return responseTemplate(HttpStatus.OK, 'stringify', JSON.stringify(body));
+  }
+
+  returnJSON(query: ReturnJSONRequest): DefaultResponse<ParseJSONRequest> {
+    const {inputJSON} = query;
+
+    return responseTemplate(HttpStatus.OK, 'parsed', JSON.parse(inputJSON));
   }
 }
