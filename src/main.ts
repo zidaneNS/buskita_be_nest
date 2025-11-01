@@ -7,6 +7,7 @@ async function bootstrap() {
   
   const config = new DocumentBuilder()
     .setTitle('Buskita API')
+    .addBearerAuth()
     .build()
 
   const documentFactory = () => SwaggerModule.createDocument(app, config);

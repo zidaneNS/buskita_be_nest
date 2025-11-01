@@ -1,7 +1,9 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { DefaultResponse } from 'src/app.contract';
 import { FindAllUsersResponse, FindOneUserResponse } from './users.contract';
+import { AuthGuard } from 'src/auth/auth.guard';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('users')
 export class UsersController {
@@ -9,6 +11,8 @@ export class UsersController {
     private readonly usersService: UsersService
   ) {}
   
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
   @Get()
   findAll(): Promise<DefaultResponse<FindAllUsersResponse>> {
     return this.usersService.findAll()

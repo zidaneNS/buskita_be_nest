@@ -7,10 +7,13 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { User } from './models/users.model';
 import { Role } from './models/roles.model';
 import { AuthModule } from './auth/auth.module';
-import { Dialect } from 'sequelize';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true
+    }),
     RsaModule, 
     UsersModule,
     SequelizeModule.forRoot({
@@ -25,7 +28,7 @@ import { Dialect } from 'sequelize';
         Role
       ]
     }),
-    AuthModule
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
