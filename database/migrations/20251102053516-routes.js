@@ -3,14 +3,17 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
-    await queryInterface.createTable('roles', {
-      roleId: {
-        type: Sequelize.DataTypes.INTEGER,
+    await queryInterface.createTable('routes', {
+      routeId: {
+        type: Sequelize.DataTypes.UUID,
         allowNull: false,
+        unique: true,
         primaryKey: true
       },
       name: {
-        type: Sequelize.DataTypes.STRING
+        type: Sequelize.DataTypes.ENUM(['GSK-SBY', 'SBY-GSK']),
+        allowNull: false,
+        unique: true
       },
       createdAt: {
         type: Sequelize.DataTypes.DATE,
@@ -21,11 +24,11 @@ module.exports = {
         type: Sequelize.DataTypes.DATE,
         allowNull: false,
         defaultValue: Date.now()
-      }
+      },
     })
   },
 
   async down (queryInterface, Sequelize) {
-    await queryInterface.dropTable('roles');
+    await queryInterface.dropTable('routes');
   }
 };

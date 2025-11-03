@@ -4,6 +4,7 @@ import { FindAllUsersResponse, FindOneUserResponse } from './users.contract';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from 'src/models/users.model';
 import responseTemplate from 'src/helpers/responseTemplate';
+import { Role } from 'src/models/roles.model';
 
 @Injectable()
 export class UsersService {
@@ -22,12 +23,13 @@ export class UsersService {
     })
   }
 
-  async findOne(userId: string): Promise<DefaultResponse<FindOneUserResponse>> {
+  async findOne(userId: string): Promise<DefaultResponse<FindOneUserResponse | any>> {
     const findUser = await this.userRepositories.findOne({
       where: {
         userId
       },
-      attributes: { exclude: ['password'] }
+      attributes: { exclude: ['password'] },
+      include: [Role]
     });
 
     if (findUser) return responseTemplate(HttpStatus.OK, 'find one user', {

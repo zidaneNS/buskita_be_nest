@@ -3,59 +3,46 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
-    await queryInterface.createTable('users', {
+    await queryInterface.createTable('seats', {
+      seatId: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull: false,
+        primaryKey: true
+      },
+      busId: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull: false
+      },
       userId: {
-        type: Sequelize.DataTypes.STRING,
-        primaryKey: true,
-        allowNull: false,
-        unique: true
+        type: Sequelize.DataTypes.STRING
       },
-      name: {
+      scheduleId: {
         type: Sequelize.DataTypes.STRING,
         allowNull: false
       },
-      email: {
-        type: Sequelize.DataTypes.STRING,
-        allowNull: false,
-        unique: true
-      },
-      password: {
-        type: Sequelize.DataTypes.STRING,
-        allowNull: false
-      },
-      phoneNumber: {
-        type: Sequelize.DataTypes.STRING,
-        unique: true,
-        allowNull: false
-      },
-      address: {
-        type: Sequelize.DataTypes.STRING,
-        allowNull: false
-      },
-      creditScore: {
+      seatNumber: {
         type: Sequelize.DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 15
+        allowNull: false
       },
-      roleId: {
-        type: Sequelize.DataTypes.INTEGER,
+      verified: {
+        type: Sequelize.DataTypes.BOOLEAN,
         allowNull: false,
-        defaultValue: 3,
+        defaultValue: false
       },
       createdAt: {
         type: Sequelize.DataTypes.DATE,
         allowNull: false,
-        defaultValue: Date.now(),
+        defaultValue: Date.now()
       },
       updatedAt: {
         type: Sequelize.DataTypes.DATE,
         allowNull: false,
         defaultValue: Date.now()
-      }
-    })
+      },
+    });
   },
 
   async down (queryInterface, Sequelize) {
-    await queryInterface.dropTable('users');
+    await queryInterface.dropTable('seats');
   }
 };

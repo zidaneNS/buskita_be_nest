@@ -1,39 +1,39 @@
 'use strict';
 
-const { DataType } = require('sequelize-typescript');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
     await queryInterface.createTable('buses', {
       busId: {
-        type: DataType.UUIDV4,
+        type: Sequelize.DataTypes.UUID,
         allowNull: false,
-        unique: true
+        unique: true,
+        primaryKey: true
       },
       name: {
-        type: DataType.STRING,
+        type: Sequelize.DataTypes.STRING,
         allowNull: false,
         unique: true
       },
-      total_row: {
-        type: DataType.INTEGER,
+      totalRow: {
+        type: Sequelize.DataTypes.INTEGER,
         allowNull: false
       },
-      total_col: {
-        type: DataType.INTEGER,
+      totalCol: {
+        type: Sequelize.DataTypes.INTEGER,
         allowNull: false
       },
-      total_backseat: {
-        type: DataType.INTEGER
+      totalBackseat: {
+        type: Sequelize.DataTypes.INTEGER
       },
       createdAt: {
-        type: DataType.DATE,
+        type: Sequelize.DataTypes.DATE,
         allowNull: false,
         defaultValue: Date.now()
       },
       updatedAt: {
-        type: DataType.DATE,
+        type: Sequelize.DataTypes.DATE,
         allowNull: false,
         defaultValue: Date.now()
       }

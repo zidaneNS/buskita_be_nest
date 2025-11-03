@@ -1,7 +1,7 @@
-import { HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from 'src/models/users.model';
-import { SignInRequest } from './auth.contract';
+import { SignInRequest, SignUpRequest } from './auth.contract';
 import { DefaultResponse } from 'src/app.contract';
 import bcrypt from 'bcrypt';
 import responseTemplate from 'src/helpers/responseTemplate';
@@ -32,5 +32,41 @@ export class AuthService {
     return responseTemplate(HttpStatus.OK, 'login succeed', {
       data: await this.jwtService.signAsync(data)
     });
+  }
+
+  async signup(body: SignUpRequest): Promise<DefaultResponse<any>> {
+    const {
+      userId,
+      name,
+      email,
+      password,
+      confirmPassword,
+      address,
+      phoneNumber,
+      roleId
+    } = body
+
+    if (password !== confirmPassword) throw new BadRequestException('password not match');
+
+    try {
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const newUser = {
+        userId,
+        name,
+        email,
+        password: hashedPassword,
+        address,
+        phoneNumber,
+        roleId
+      }
+
+      const user = await this.userRepositories.create(newUser);
+
+      return responseTemplate(HttpStatus.CREATED, 'user created', user);
+    } catch (err) {
+      console.error(err);
+      throw new BadRequestException('fail create user');
+    }
   }
 }

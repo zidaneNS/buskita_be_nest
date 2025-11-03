@@ -9,16 +9,16 @@ module.exports = {
     {
       busId: uuid(),
       name: '12',
-      total_row: 6,
-      total_col: 5,
-      total_backseat: 6
+      totalRow: 6,
+      totalCol: 5,
+      totalBackseat: 6
     },
     {
       busId: uuid(),
       name: '08',
-      total_row: 4,
-      total_col: 5,
-      total_backseat: 6
+      totalRow: 4,
+      totalCol: 5,
+      totalBackseat: 6
     },
    ]);
   },

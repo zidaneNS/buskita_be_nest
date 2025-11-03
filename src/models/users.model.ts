@@ -1,5 +1,8 @@
-import { BelongsTo, Column, ForeignKey, Model, PrimaryKey, Table } from "sequelize-typescript";
+import { BelongsTo, BelongsToMany, Column, ForeignKey, HasMany, Model, PrimaryKey, Table } from "sequelize-typescript";
 import { Role } from "./roles.model";
+import { Schedule } from "./schedules.model";
+import { Seat } from "./seats.model";
+import { ScheduleUser } from "./schedule_user.model";
 
 @Table({
   timestamps: true,
@@ -20,13 +23,13 @@ export class User extends Model {
   password: string;
 
   @Column
-  phone_number: string;
+  phoneNumber: string;
 
   @Column
   address: string;
 
   @Column
-  credit_score: number;
+  creditScore: number;
 
   @ForeignKey(() => Role)
   @Column
@@ -34,4 +37,10 @@ export class User extends Model {
 
   @BelongsTo(() => Role)
   role: Role;
+
+  @BelongsToMany(() => Schedule, () => ScheduleUser)
+  schedules: Schedule[];
+
+  @HasMany(() => Seat)
+  seats: Seat[];
 }

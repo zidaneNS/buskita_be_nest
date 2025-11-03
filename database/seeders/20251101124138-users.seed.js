@@ -10,7 +10,7 @@ module.exports = {
       name: 'zidane',
       email: 'zidane@example.com',
       password: await bcrypt.hash('password', 10),
-      phone_number: '0812345',
+      phoneNumber: '0812345',
       address: 'indonesia',
       roleId: 1
     },
@@ -19,7 +19,7 @@ module.exports = {
       name: 'laurenza',
       email: 'laurenza@example.com',
       password: await bcrypt.hash('password', 10),
-      phone_number: '081234567',
+      phoneNumber: '081234567',
       address: 'indonesia',
       roleId: 2
     },
