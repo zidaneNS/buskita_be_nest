@@ -88,20 +88,20 @@ export class RsaService {
     const plainArray = plaintext.split('');
 
     const plainToAscii = plainArray.map(char => char.charCodeAt(0));
-    // const cipherArray = plainToAscii.map(ascii => modPow(ascii, eValue, nValue));
-    // const cipherText = cipherArray.map(cipher => cipher.toString().padStart(totalPad, '0'));
-    const cipherText = plainArray.map(char => {
-      const asciiCode = char.charCodeAt(0);
-      const cipher = modPow(asciiCode, eValue, nValue);
-      return cipher.toString().padStart(totalPad, '0');
-    });
+    const cipherArray = plainToAscii.map(ascii => modPow(ascii, eValue, nValue));
+    const cipherText = cipherArray.map(cipher => cipher.toString().padStart(totalPad, '0'));
+    // const cipherText = plainArray.map(char => {
+    //   const asciiCode = char.charCodeAt(0);
+    //   const cipher = modPow(asciiCode, eValue, nValue);
+    //   return cipher.toString().padStart(totalPad, '0');
+    // });
 
-    // console.log('cipher', cipherText);
+    console.log('cipher', cipherText);
 
     return responseTemplate(HttpStatus.OK, 'cipher text', {
-      // plainToAscii,
-      // cipherArray,
-      // cipherText,
+      plainToAscii,
+      cipherArray,
+      cipherText,
       result: cipherText.join('')
     });
   }
@@ -122,24 +122,24 @@ export class RsaService {
       }
     });
 
-    const decrypted = splittedCipher.map(cipher => {
-      const asciiCipher = parseInt(cipher);
-      const asciiPlain = modPow(asciiCipher, dValue, nValue);
-      return String.fromCharCode(asciiPlain);
-    });
+    // const decrypted = splittedCipher.map(cipher => {
+    //   const asciiCipher = parseInt(cipher);
+    //   const asciiPlain = modPow(asciiCipher, dValue, nValue);
+    //   return String.fromCharCode(asciiPlain);
+    // });
 
-    // const decrypted = splittedCipher.map(cipher => modPow(parseInt(cipher), dValue, nValue));
+    const decrypted = splittedCipher.map(cipher => modPow(parseInt(cipher), dValue, nValue));
 
-    // const plainText = decrypted.map(item => String.fromCharCode(item));
+    const plainText = decrypted.map(item => String.fromCharCode(item));
 
-    // console.log('json', plainText.join(''));
+    console.log('json', plainText.join(''));
 
     return responseTemplate(HttpStatus.OK, 'decrypted', {
-      // splittedCipher,
-      // decrypted,
-      // plainText,
+      splittedCipher,
+      decrypted,
+      plainText,
       result: decrypted.join(''),
-      // json: JSON.parse(plainText.join(''))
+      json: JSON.parse(plainText.join(''))
     });
   }
 

@@ -8,6 +8,11 @@ import { User } from './models/users.model';
 import { Role } from './models/roles.model';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { Bus } from './models/buses.model';
+import { Route } from './models/routes.model';
+import { Schedule } from './models/schedules.model';
+import { ScheduleUser } from './models/schedule_user.model';
+import { Seat } from './models/seats.model';
 
 @Module({
   imports: [
@@ -25,7 +30,12 @@ import { ConfigModule } from '@nestjs/config';
       database: process.env.DB_NAME,
       models: [
         User,
-        Role
+        Role,
+        Bus,
+        Route,
+        Schedule,
+        ScheduleUser,
+        Seat
       ]
     }),
     AuthModule,
