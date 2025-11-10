@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Logger, Param, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { DefaultResponse } from 'src/app.contract';
 import { FindAllUsersResponse, FindOneUserResponse } from './users.contract';
@@ -13,19 +13,39 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService
   ) {}
+  private readonly logger = new Logger('UsersController');
   
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(ROLE.SuperAdmin)
   @Get()
-  findAll(): Promise<DefaultResponse<FindAllUsersResponse>> {
-    return this.usersService.findAll()
+  async findAll(): Promise<DefaultResponse<FindAllUsersResponse>> {
+    try {
+      this.logger.log('---FIND ALL---');
+
+      return this.usersService.findAll();
+    } catch (err) {
+      this.logger.error(`findAll:::ERROR: ${JSON.stringify(err)}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard, UsersGuard)
   @Get(':userId')
-  findOne(@Param('userId') userId: string): Promise<DefaultResponse<FindOneUserResponse>> {
-    return this.usersService.findOne(userId)
+  async findOne(@Param('userId') userId: string): Promise<DefaultResponse<FindOneUserResponse>> {
+    try {
+      this.logger.log('---FIND ONE---');
+      this.logger.log(`findOne:::params: ${JSON.stringify(userId)}`);
+      
+      return this.usersService.findOne(userId);
+    } catch (err) {
+      this.logger.error(`findOne:::ERROR: ${JSON.stringify(err)}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }

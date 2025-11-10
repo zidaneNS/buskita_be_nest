@@ -1,7 +1,7 @@
-import { BadRequestException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from 'src/models/users.model';
-import { SignInRequest, SignUpRequest } from './auth.contract';
+import { SignInRequest, SignInResponse, SignUpRequest, SignUpResponse } from './auth.contract';
 import { DefaultResponse } from 'src/app.contract';
 import bcrypt from 'bcrypt';
 import responseTemplate from 'src/helpers/responseTemplate';
@@ -16,39 +16,52 @@ export class AuthService {
     private jwtService: JwtService
   ) {}
 
-  async signin(body: SignInRequest): Promise<DefaultResponse<any>> {
-    const { userId, password } = body;
+  private readonly logger = new Logger('AuthService');
 
-    const findUser = await this.userRepositories.findOne({ where: {userId} })
+  async signin(body: SignInRequest): Promise<DefaultResponse<SignInResponse>> {
+    try {
+      this.logger.log('---SIGNIN---');
 
-    if (!findUser) throw new UnauthorizedException();
+      const { userId, password } = body;
+  
+      const findUser = await this.userRepositories.findOne({ where: {userId} })
+  
+      if (!findUser) throw new UnauthorizedException();
+  
+      const { password: findPassword, ...data } = findUser.get();
+  
+      const matched = await bcrypt.compare(password, findPassword);
+  
+      if (!matched) throw new UnauthorizedException();
+  
+      return responseTemplate(HttpStatus.OK, 'login succeed', {
+        data: await this.jwtService.signAsync(data)
+      });
+    } catch (err) {
+      this.logger.error(`signin:::ERROR: ${JSON.stringify(err)}`);
 
-    const { password: findPassword, ...data } = findUser.get();
-
-    const matched = await bcrypt.compare(password, findPassword);
-
-    if (!matched) throw new UnauthorizedException();
-
-    return responseTemplate(HttpStatus.OK, 'login succeed', {
-      data: await this.jwtService.signAsync(data)
-    });
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
-  async signup(body: SignUpRequest): Promise<DefaultResponse<any>> {
-    const {
-      userId,
-      name,
-      email,
-      password,
-      confirmPassword,
-      address,
-      phoneNumber,
-      roleId
-    } = body
-
-    if (password !== confirmPassword) throw new BadRequestException('password not match');
-
+  async signup(body: SignUpRequest): Promise<DefaultResponse<SignUpResponse>> {
     try {
+      this.logger.log('---SIGNUP---');
+
+      const {
+        userId,
+        name,
+        email,
+        password,
+        confirmPassword,
+        address,
+        phoneNumber,
+        roleId
+      } = body
+
+      if (password !== confirmPassword) throw new BadRequestException('password not match');
+
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const newUser = {
@@ -61,12 +74,20 @@ export class AuthService {
         roleId
       }
 
+      const isExist = await this.userRepositories.findOne({ where: { userId }});
+
+      if (isExist) throw new ConflictException(`user with id ${userId} is existed`);
+
       const user = await this.userRepositories.create(newUser);
 
-      return responseTemplate(HttpStatus.CREATED, 'user created', user);
+      return responseTemplate(HttpStatus.CREATED, 'user created', {
+        data: user
+      });
     } catch (err) {
-      console.error(err);
-      throw new BadRequestException('fail create user');
+      this.logger.error(`signup:::ERROR: ${JSON.stringify(err)}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

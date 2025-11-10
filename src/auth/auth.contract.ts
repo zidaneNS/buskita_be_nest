@@ -1,4 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { User } from "src/models/users.model";
 
 export class SignInRequest {
   @ApiProperty()
@@ -32,4 +33,14 @@ export class SignUpRequest {
 
   @ApiProperty()
   userId: string;
+}
+
+export class SignInResponse {
+  @ApiProperty()
+  data: string;
+}
+
+export class SignUpResponse {
+  @ApiProperty()
+  data: User;
 }

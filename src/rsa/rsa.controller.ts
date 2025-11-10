@@ -1,43 +1,69 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Logger, Post, Query } from '@nestjs/common';
 import { RsaService } from './rsa.service';
-import { DecryptRequest, EncryptRequest, GenerateEValueRequest, GenerateEValueResponse, GenerateKeyRequest, GenerateKeyResponse, ParseJSONRequest, ReturnJSONRequest } from './rsa.contract';
+import { DecryptRequest, EncryptRequest, GenerateEValueRequest, GenerateEValueResponse, GenerateKeyRequest, GenerateKeyResponse } from './rsa.contract';
 import { DefaultResponse } from 'src/app.contract';
-import { ApiResponse } from '@nestjs/swagger';
 
 
 @Controller('rsa')
 export class RsaController {
   constructor(private readonly rsaService: RsaService) {}
+  private readonly logger = new Logger('RsaController', { timestamp: true })
 
   @Post()
   @HttpCode(200)
   generateEValue(@Body() body: GenerateEValueRequest): DefaultResponse<GenerateEValueResponse> {
-    return this.rsaService.generateEValue(body);
+    try {
+      this.logger.log('---GENERATE E VALUES---');
+      this.logger.log(`generateEvalue:::body: ${JSON.stringify(body)}`);
+
+      return this.rsaService.generateEValue(body);
+    } catch (err) {
+      this.logger.error(`generateEvalue:::ERROR: ${JSON.stringify(err)}`);
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
   
   @Post('generate-key')
   @HttpCode(200)
   generateKey(@Body() body: GenerateKeyRequest): DefaultResponse<GenerateKeyResponse> {
-    return this.rsaService.generateKey(body);
+    try {
+      this.logger.log('---GENERATE KEY---');
+      this.logger.log(`generateKey:::body: ${JSON.stringify(body)}`);
+
+      return this.rsaService.generateKey(body);
+    } catch (err) {
+      this.logger.error(`generateKey:::ERROR: ${JSON.stringify(err)}`);
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Get('encrypt')
-  encrypt(@Query() query: EncryptRequest): DefaultResponse<any> {
-    return this.rsaService.encrypt(query);
+  encrypt(@Query() query: EncryptRequest): DefaultResponse<string> {
+    try {
+      this.logger.log('---ENCRYPT---');
+      this.logger.log(`encrypt:::query: ${JSON.stringify(query)}`);
+
+      return this.rsaService.encrypt(query);
+    } catch (err) {
+      this.logger.error(`encrypt:::ERROR: ${JSON.stringify(err)}`);
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Get('decrypt')
   decrypt(@Query() query: DecryptRequest): DefaultResponse<any> {
-    return this.rsaService.decrypt(query);
-  }
+    try {
+      this.logger.log('---DECRYPT---');
+      this.logger.log(`decrypt:::query: ${JSON.stringify(query)}`);
 
-  @Post('parseJSON')
-  parseJSON(@Body() body: ParseJSONRequest): DefaultResponse<any> {
-    return this.rsaService.parseJSON(body);
-  }
-
-  @Get('returnJSON')
-  returnJSON(@Query() query: ReturnJSONRequest): DefaultResponse<ParseJSONRequest> {
-    return this.rsaService.returnJSON(query);
+      return this.rsaService.decrypt(query);
+    } catch (err) {
+      this.logger.error(`decrypt:::ERROR: ${JSON.stringify(err)}`);
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }
