@@ -13,6 +13,7 @@ import { Route } from './models/routes.model';
 import { Schedule } from './models/schedules.model';
 import { ScheduleUser } from './models/schedule_user.model';
 import { Seat } from './models/seats.model';
+import { BusesModule } from './buses/buses.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { Seat } from './models/seats.model';
       ]
     }),
     AuthModule,
+    BusesModule,
   ],
   controllers: [AppController],
   providers: [AppService]

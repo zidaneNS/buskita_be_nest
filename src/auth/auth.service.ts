@@ -81,7 +81,10 @@ export class AuthService {
       const user = await this.userRepositories.create(newUser);
 
       return responseTemplate(HttpStatus.CREATED, 'user created', {
-        data: user
+        data: {
+          ...user,
+          password: 'restricted'
+        } as User
       });
     } catch (err) {
       this.logger.error(`signup:::ERROR: ${JSON.stringify(err)}`);
