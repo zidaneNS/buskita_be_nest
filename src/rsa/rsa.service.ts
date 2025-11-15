@@ -139,7 +139,7 @@ export class RsaService {
       decrypted,
       plainText,
       result: decrypted.join(''),
-      json: JSON.parse(plainText.join(''))
+      // json: JSON.parse(plainText.join('')) || plainText.join('')
     });
   }
 
