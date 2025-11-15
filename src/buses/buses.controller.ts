@@ -1,11 +1,12 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Logger, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Logger, Param, Post, Put, UseGuards, UsePipes } from '@nestjs/common';
 import { BusesService } from './buses.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { ROLE, Roles } from 'src/roles/roles.decorator';
 import { RolesGuard } from 'src/roles/roles.guard';
 import { DefaultResponse } from 'src/app.contract';
-import { CreateBusRequest, CreateBusResponse, FindAllBusesResponse } from './buses.contract';
+import { CreateBusRequest, FindOneBusResponse, FindAllBusesResponse, busSchema } from './buses.contract';
+import { ModelValidationPipe } from 'src/app.validation';
 
 @Controller('buses')
 export class BusesController {
@@ -31,8 +32,9 @@ export class BusesController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(ROLE.SuperAdmin, ROLE.Admin)
+  @UsePipes(new ModelValidationPipe(busSchema))
   @Post()
-  async create(@Body() body: CreateBusRequest): Promise<DefaultResponse<CreateBusResponse>> {
+  async create(@Body() body: CreateBusRequest): Promise<DefaultResponse<FindOneBusResponse>> {
     try {
       this.logger.log('---CREATE---');
       this.logger.log(`create:::body: ${JSON.stringify(body)}`);
@@ -40,6 +42,44 @@ export class BusesController {
       return this.busesService.create(body);
     } catch (err) {
       this.logger.error(`create:::ERROR: ${JSON.stringify(err)}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(ROLE.SuperAdmin, ROLE.Admin)
+  @UsePipes(new ModelValidationPipe(busSchema))
+  @Put(':busId')
+  async update(@Body() body: CreateBusRequest, @Param('busId') busId: string): Promise<DefaultResponse<FindOneBusResponse>> {
+    try {
+      this.logger.log('---UPDATE---');
+      this.logger.log(`update:::body: ${JSON.stringify(body)}`);
+      this.logger.log(`update:::busId: ${busId}`);
+
+      return this.busesService.update(body, busId);
+    } catch (err) {
+      this.logger.error(`update:::ERROR: ${JSON.stringify(err)}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(ROLE.SuperAdmin, ROLE.Admin)
+  @Delete(':busId')
+  async delete(@Param('busId') busId: string): Promise<DefaultResponse<null>> {
+    try {
+      this.logger.log('---DELETE---');
+      this.logger.log(`delete:::busId: ${busId}`);
+
+      return this.busesService.delete(busId);
+    } catch (err) {
+      this.logger.error(`delete:::ERROR: ${JSON.stringify(err)}`);
 
       if (err instanceof HttpException) throw err;
       throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);

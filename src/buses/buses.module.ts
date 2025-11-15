@@ -11,7 +11,7 @@ import { Role } from 'src/models/roles.model';
   imports: [
     SequelizeModule.forFeature([
       Bus,
-      Role
+      Role,
     ])
   ]
 })

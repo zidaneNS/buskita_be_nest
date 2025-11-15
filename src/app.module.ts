@@ -14,6 +14,7 @@ import { Schedule } from './models/schedules.model';
 import { ScheduleUser } from './models/schedule_user.model';
 import { Seat } from './models/seats.model';
 import { BusesModule } from './buses/buses.module';
+import { SchedulesModule } from './schedules/schedules.module';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { BusesModule } from './buses/buses.module';
     SequelizeModule.forRoot({
       dialect: 'postgres',
       host: process.env.DB_HOST,
-      port: 5432,
+      port: Number(process.env.DB_PORT ?? 5432),
       username: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
@@ -41,6 +42,7 @@ import { BusesModule } from './buses/buses.module';
     }),
     AuthModule,
     BusesModule,
+    SchedulesModule,
   ],
   controllers: [AppController],
   providers: [AppService]

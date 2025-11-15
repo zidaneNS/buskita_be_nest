@@ -3,8 +3,8 @@ import { InjectModel } from '@nestjs/sequelize';
 import { DefaultResponse } from 'src/app.contract';
 import responseTemplate from 'src/helpers/responseTemplate';
 import { Bus } from 'src/models/buses.model';
-import { CreateBusRequest, CreateBusResponse, FindAllBusesResponse } from './buses.contract';
-import { v4 as uuid } from 'uuid'
+import { CreateBusRequest, FindOneBusResponse, FindAllBusesResponse } from './buses.contract';
+import { v4 as uuid } from 'uuid';
 
 @Injectable()
 export class BusesService {
@@ -28,7 +28,7 @@ export class BusesService {
     }
   }
 
-  async create(body: CreateBusRequest): Promise<DefaultResponse<CreateBusResponse>> {
+  async create(body: CreateBusRequest): Promise<DefaultResponse<FindOneBusResponse>> {
     try {
       this.logger.log('---CREATE---');
       this.logger.log(`create:::body: ${JSON.stringify(body)}`);
@@ -47,6 +47,50 @@ export class BusesService {
       return responseTemplate(HttpStatus.OK, 'bus successfully created', { data: bus });
     } catch (err) {
       this.logger.error(`create:::ERROR: ${JSON.stringify(err)}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async update(body: CreateBusRequest, busId: string): Promise<DefaultResponse<FindOneBusResponse>> {
+    try {
+      this.logger.log('---UPDATE---');
+      this.logger.log(`update:::body: ${JSON.stringify(body)}`);
+
+      const bus = await this.busRepositories.findOne({ where: { busId }});
+
+      if (!bus) throw new BadRequestException(`bus with id ${busId} is not found`);
+
+      await bus.update({...body});
+
+      return responseTemplate(HttpStatus.OK, 'bus successfully updated', { data: bus });
+    } catch (err) {
+      this.logger.error(`update:::ERROR: ${JSON.stringify(err)}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async delete(busId: string): Promise<DefaultResponse<null>> {
+    try {
+      this.logger.log('---DELETE---');
+      this.logger.log(`delete:::busId: ${busId}`);
+
+      const bus = await this.busRepositories.findOne({ where: { busId }});
+
+      if (!bus) throw new BadRequestException(`bus with id ${busId} is not found`);
+
+      const schedules = bus.schedules;
+
+      this.logger.log(`delete:::schedules: ${JSON.stringify(schedules)}`);
+
+      await bus.destroy();
+      
+      return responseTemplate(HttpStatus.NO_CONTENT, 'bus successfully deleted');
+    } catch (err) {
+      this.logger.error(`delete:::ERROR: ${JSON.stringify(err)}`);
 
       if (err instanceof HttpException) throw err;
       throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);

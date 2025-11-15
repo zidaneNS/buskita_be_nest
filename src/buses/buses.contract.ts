@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Bus } from "src/models/buses.model";
+import z from "zod";
 
 export class CreateBusRequest {
   @ApiProperty()
@@ -11,7 +12,7 @@ export class CreateBusRequest {
   @ApiProperty()
   totalCol: number
 
-  @ApiProperty()
+  @ApiProperty({ default: 0 })
   totalBackseat: number
 }
 
@@ -20,7 +21,14 @@ export class FindAllBusesResponse {
   data: Bus[]
 }
 
-export class CreateBusResponse {
+export class FindOneBusResponse {
   @ApiProperty()
   data: Bus
 }
+
+export const busSchema = z.object({
+  name: z.string().min(1),
+  totalRow: z.number().min(1),
+  totalCol: z.number().min(1),
+  totalBackseat: z.number().min(0),
+}).required();
