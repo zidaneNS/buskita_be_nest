@@ -15,6 +15,8 @@ import { ScheduleUser } from './models/schedule_user.model';
 import { Seat } from './models/seats.model';
 import { BusesModule } from './buses/buses.module';
 import { SchedulesModule } from './schedules/schedules.module';
+import { RoutesController } from './routes/routes.controller';
+import { RoutesModule } from './routes/routes.module';
 
 @Module({
   imports: [
@@ -43,6 +45,7 @@ import { SchedulesModule } from './schedules/schedules.module';
     AuthModule,
     BusesModule,
     SchedulesModule,
+    RoutesModule,
   ],
   controllers: [AppController],
   providers: [AppService]

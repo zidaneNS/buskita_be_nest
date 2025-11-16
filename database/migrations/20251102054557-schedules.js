@@ -5,7 +5,7 @@ module.exports = {
   async up (queryInterface, Sequelize) {
     await queryInterface.createTable('schedules', {
       scheduleId: {
-        type: Sequelize.DataTypes.UUID,
+        type: Sequelize.DataTypes.STRING,
         allowNull: false,
         unique: true,
         primaryKey: true

@@ -6,7 +6,7 @@ module.exports = {
   async up (queryInterface, Sequelize) {
     await queryInterface.createTable('buses', {
       busId: {
-        type: Sequelize.DataTypes.UUID,
+        type: Sequelize.DataTypes.STRING,
         allowNull: false,
         unique: true,
         primaryKey: true
@@ -25,7 +25,8 @@ module.exports = {
         allowNull: false
       },
       totalBackseat: {
-        type: Sequelize.DataTypes.INTEGER
+        type: Sequelize.DataTypes.INTEGER,
+        defaultValue: 0
       },
       createdAt: {
         type: Sequelize.DataTypes.DATE,
