@@ -88,8 +88,9 @@ export class RsaService {
     const plainArray = plaintext.split('');
 
     const plainToAscii = plainArray.map(char => char.charCodeAt(0));
-    const cipherArray = plainToAscii.map(ascii => modPow(ascii, eValue, nValue));
-    const cipherText = cipherArray.map(cipher => cipher.toString().padStart(totalPad, '0'));
+    const cipherArray = plainToAscii.map(ascii => modPow(BigInt(ascii), BigInt(eValue), BigInt(nValue)));
+    const cipherArrayNum: number[] = cipherArray.map(val => Number(val));
+    const cipherText = cipherArrayNum.map(cipher => cipher.toString().padStart(totalPad, '0'));
     // const cipherText = plainArray.map(char => {
     //   const asciiCode = char.charCodeAt(0);
     //   const cipher = modPow(asciiCode, eValue, nValue);
@@ -100,7 +101,7 @@ export class RsaService {
 
     return responseTemplate(HttpStatus.OK, 'cipher text', {
       plainToAscii,
-      cipherArray,
+      cipherArrayNum,
       cipherText,
       result: cipherText.join('')
     });
@@ -128,15 +129,15 @@ export class RsaService {
     //   return String.fromCharCode(asciiPlain);
     // });
 
-    const decrypted = splittedCipher.map(cipher => modPow(parseInt(cipher), dValue, nValue));
-
-    const plainText = decrypted.map(item => String.fromCharCode(item));
+    const decrypted = splittedCipher.map(cipher => modPow(BigInt(parseInt(cipher)), BigInt(dValue), BigInt(nValue)));
+    const decryptedNum: number[] = decrypted.map(val => Number(val));
+    const plainText = decryptedNum.map(item => String.fromCharCode(item));
 
     console.log('json', plainText.join(''));
 
     return responseTemplate(HttpStatus.OK, 'decrypted', {
       splittedCipher,
-      decrypted,
+      decryptedNum,
       plainText,
       result: decrypted.join(''),
       // json: JSON.parse(plainText.join('')) || plainText.join('')

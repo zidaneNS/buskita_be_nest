@@ -1,14 +1,14 @@
 import { ApiProperty } from "@nestjs/swagger";
 
 export class RsaApiContract {
-  
+
 }
 
 export class GenerateEValueRequest {
-  @ApiProperty()
+  @ApiProperty({ default: 20113 })
   pValue: number;
 
-  @ApiProperty()
+  @ApiProperty({ default: 31123 })
   qValue: number;
 
   @ApiProperty({ default: 10 })
@@ -16,13 +16,13 @@ export class GenerateEValueRequest {
 }
 
 export class GenerateKeyRequest {
-  @ApiProperty({ default: 49 })
+  @ApiProperty({ default: 395 })
   eValue: number;
 
-  @ApiProperty({ default: 713 })
+  @ApiProperty({ default: 625976899 })
   nValue: number;
 
-  @ApiProperty({ default: 660 })
+  @ApiProperty({ default: 625925664 })
   toitent: number;
 }
 
@@ -40,11 +40,11 @@ export class ParseJSONRequest {
   @ApiProperty({ default: '123' })
   ticketId: string;
 
-  @ApiProperty({ default: 'zidane' })
-  name: string;
+  // @ApiProperty({ default: 'zidane' })
+  // name: string;
 
-  @ApiProperty({ default: '181221055' })
-  nim_nip: string;
+  // @ApiProperty({ default: '181221055' })
+  // nim_nip: string;
 }
 
 export class ReturnJSONRequest {
