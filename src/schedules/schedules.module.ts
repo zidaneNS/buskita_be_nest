@@ -20,7 +20,8 @@ import { User } from 'src/models/users.model';
       Role,
       Route,
       Bus,
-      Seat
+      Seat,
+      User
     ])
   ]
 })

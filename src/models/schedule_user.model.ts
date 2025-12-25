@@ -3,7 +3,8 @@ import { Schedule } from "./schedules.model";
 import { User } from "./users.model";
 
 @Table({
-  tableName: 'schedule_user'
+  tableName: 'schedule_user',
+  timestamps: false
 })
 export class ScheduleUser extends Model {
   @ForeignKey(() => Schedule)

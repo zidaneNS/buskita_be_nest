@@ -4,6 +4,7 @@ import { UsersController } from './users.controller';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { User } from '../models/users.model';
 import { Role } from '../models/roles.model';
+import { ScheduleUser } from 'src/models/schedule_user.model';
 
 @Module({
   controllers: [UsersController],
@@ -11,7 +12,8 @@ import { Role } from '../models/roles.model';
   imports: [
     SequelizeModule.forFeature([
       User,
-      Role
+      Role,
+      ScheduleUser
     ])
   ]
 })

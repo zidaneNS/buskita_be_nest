@@ -35,7 +35,6 @@ export class SchedulesService {
       const schedules = await this.scheduleRepositories.findAll({
         include: [
           Bus,
-          Route,
           User
         ]
       });
@@ -47,6 +46,8 @@ export class SchedulesService {
       throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  // async findOne
 
   async create(body: CreateScheduleRequest): Promise<DefaultResponse<FindOneScheduleResponse>> {
     try {
