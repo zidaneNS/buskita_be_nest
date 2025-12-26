@@ -1,8 +1,15 @@
-export default function modPow(base: number, exp: number, mod: number) {
-  let result = base % mod;
+export default function modPow(base: bigint, exp: bigint, mod: bigint): bigint {
+  if (mod === 1n) return 0n;
 
-  for (let i = exp; i > 1; i--) {
-    result = (result * base) % mod;
+  let result = 1n;
+  base = base % mod;
+
+  while (exp > 0n) {
+    if (exp & 1n) {
+      result = (result * base) % mod;
+    }
+    exp >>= 1n;
+    base = (base * base) % mod
   }
 
   return result;

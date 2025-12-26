@@ -113,7 +113,7 @@ export class RsaService {
       
       const cipherText = plainArray.map(char => {
         const asciiCode = char.charCodeAt(0);
-        const cipher = modPow(asciiCode, eValue, nValue);
+        const cipher = modPow(BigInt(asciiCode), BigInt(eValue), BigInt(nValue));
         return cipher.toString().padStart(totalPad, '0');
       });
   
@@ -147,9 +147,9 @@ export class RsaService {
         }
       });
   
-      const decrypted = splittedCipher.map(cipher => modPow(parseInt(cipher), dValue, nValue));
+      const decrypted = splittedCipher.map(cipher => modPow(BigInt(parseInt(cipher)), BigInt(dValue), BigInt(nValue)));
   
-      const plainText = decrypted.map(item => String.fromCharCode(item));
+      const plainText = decrypted.map(item => String.fromCharCode(Number(item)));
   
       console.log('json', plainText.join(''));
   
