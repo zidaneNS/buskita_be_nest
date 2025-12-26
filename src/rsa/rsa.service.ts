@@ -5,6 +5,7 @@ import responseTemplate from 'src/helpers/responseTemplate';
 import { DecryptRequest, EncryptRequest, GenerateEValueRequest, GenerateEValueResponse, GenerateKeyRequest, GenerateKeyResponse } from './rsa.contract';
 import { DefaultResponse } from 'src/app.contract';
 import modPow from 'src/helpers/modPow';
+import generateErrMsg from 'src/helpers/generateErrMsg';
 
 @Injectable()
 export class RsaService {
@@ -61,7 +62,8 @@ export class RsaService {
         eValues
       });
     } catch (err) {
-      this.logger.error(`generateEValue:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`generateEValue:::ERROR: ${errMessage}`);
       if (err instanceof HttpException) throw err;
       throw new HttpException(err ,HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -92,10 +94,11 @@ export class RsaService {
         publicKey
       });
     } catch (err) {
-      this.logger.error(`generateKey:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`generateKey:::ERROR: ${errMessage}`);
       
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -121,10 +124,11 @@ export class RsaService {
   
       return responseTemplate(HttpStatus.OK, 'cipher text', cipherText.join(''));
     } catch (err) {
-      this.logger.error(`encrypt:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`encrypt:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -155,10 +159,11 @@ export class RsaService {
   
       return responseTemplate(HttpStatus.OK, 'decrypted', JSON.parse(plainText.join('')));
     } catch (err) {
-      this.logger.error(`decrypt:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`decrypt:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, 500);
+      throw new HttpException(errMessage, 500);
     }
   }
 }

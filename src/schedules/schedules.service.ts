@@ -2,13 +2,14 @@ import { BadRequestException, HttpException, HttpStatus, Injectable, InternalSer
 import { InjectModel } from '@nestjs/sequelize';
 import { DefaultResponse } from 'src/app.contract';
 import { Schedule } from 'src/models/schedules.model';
-import { CreateScheduleRequest, FindAllScheduleResponse, FindOneScheduleResponse } from './schedules.contract';
+import { CreateScheduleRequest, FindAllScheduleResponse, FindOneScheduleResponse, ScheduleWithSeatInfo } from './schedules.contract';
 import responseTemplate from 'src/helpers/responseTemplate';
 import { Bus } from 'src/models/buses.model';
 import { Route } from 'src/models/routes.model';
 import { v4 as uuid } from 'uuid';
 import { Seat } from 'src/models/seats.model';
 import { User } from 'src/models/users.model';
+import generateErrMsg from 'src/helpers/generateErrMsg';
 
 @Injectable()
 export class SchedulesService {
@@ -35,15 +36,28 @@ export class SchedulesService {
       const schedules = await this.scheduleRepositories.findAll({
         include: [
           Bus,
+          Seat,
           User
         ]
       });
-      return responseTemplate(HttpStatus.OK, 'find all schedules', { data: schedules });
+
+      const scheduleWithSeatInfo: Partial<ScheduleWithSeatInfo>[] = schedules.map(item => {
+        const {users, seats, ...restData} = item.get() as Schedule;
+
+        return {
+          ...restData,
+          totalSeats: seats.length,
+          totalUser: users.length
+        }
+      });
+
+      return responseTemplate(HttpStatus.OK, 'find all schedules', { data: scheduleWithSeatInfo });
     } catch (err) {
-      this.logger.error(`findAll:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`findAll:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -87,11 +101,11 @@ export class SchedulesService {
 
       return responseTemplate(HttpStatus.CREATED, 'schedule created', { data: schedule });
     } catch (err) {
-      this.logger.error(`create:::ERROR: ${JSON.stringify(err)}`);
-      this.logger.error(err);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`create:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -108,11 +122,12 @@ export class SchedulesService {
 
       return responseTemplate(HttpStatus.OK, 'schedule updated', { data: schedule });
     } catch (err) {
-      this.logger.error(`update:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`update:::ERROR: ${errMessage}`);
       this.logger.error(err);
 
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -129,10 +144,11 @@ export class SchedulesService {
 
       return responseTemplate(HttpStatus.NO_CONTENT, 'schedule successfully deleted');
     } catch (err) {
-      this.logger.error(`delete:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`delete:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

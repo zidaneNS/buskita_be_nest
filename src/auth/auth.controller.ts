@@ -2,6 +2,7 @@ import { Body, Controller, HttpException, HttpStatus, Logger, Post } from '@nest
 import { AuthService } from './auth.service';
 import { SignInRequest, SignInResponse, SignUpRequest, SignUpResponse } from './auth.contract';
 import { DefaultResponse } from 'src/app.contract';
+import generateErrMsg from 'src/helpers/generateErrMsg';
 
 @Controller('auth')
 export class AuthController {
@@ -18,10 +19,11 @@ export class AuthController {
       
       return this.authService.signin(body);
     } catch (err) {
-      this.logger.error(`signin:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`signin:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -32,10 +34,11 @@ export class AuthController {
 
       return this.authService.signup(body);
     } catch (err) {
-      this.logger.error(`signup:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`signup:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

@@ -1,4 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { Bus } from "src/models/buses.model";
 import { Schedule } from "src/models/schedules.model";
 import z from "zod";
 
@@ -23,7 +24,32 @@ export class FindOneScheduleResponse {
 
 export class FindAllScheduleResponse {
   @ApiProperty()
-  data: Schedule[];
+  data: Partial<ScheduleWithSeatInfo>[];
+}
+
+export class ScheduleWithSeatInfo extends Schedule {
+  totalUser: number;
+  totalSeats: number;
+}
+
+export class BaseScheduleProperty {
+  @ApiProperty()
+  scheduleId: string;
+
+  @ApiProperty()
+  time: Date;
+
+  @ApiProperty()
+  isClosed: boolean;
+
+  @ApiProperty()
+  busId: string;
+
+  @ApiProperty()
+  routeId: string;
+
+  @ApiProperty()
+  bus: Bus;
 }
 
 export const scheduleSchema = z.object({

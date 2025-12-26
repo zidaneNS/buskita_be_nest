@@ -1,5 +1,6 @@
 import { ArgumentMetadata, BadRequestException, Logger, PipeTransform } from "@nestjs/common";
 import { ZodSchema } from "zod";
+import generateerrMsg from "./helpers/generateErrMsg";
 
 export class ModelValidationPipe implements PipeTransform {
   constructor(private schema: ZodSchema) {}
@@ -17,7 +18,8 @@ export class ModelValidationPipe implements PipeTransform {
       }
       return value;
     } catch (err) {
-      this.logger.error(`transform:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateerrMsg(err);
+      this.logger.error(`transform:::ERROR: ${errMessage}`);
       throw new BadRequestException('Validation failed');
     }
   }

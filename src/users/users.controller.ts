@@ -7,6 +7,7 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import { ROLE, Roles } from 'src/roles/roles.decorator';
 import { RolesGuard } from 'src/roles/roles.guard';
 import { UsersGuard } from './users.guard';
+import generateErrMsg from 'src/helpers/generateErrMsg';
 
 @Controller('users')
 export class UsersController {
@@ -25,10 +26,11 @@ export class UsersController {
 
       return this.usersService.findAll();
     } catch (err) {
-      this.logger.error(`findAll:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`findAll:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -42,10 +44,11 @@ export class UsersController {
       
       return this.usersService.findOne(userId);
     } catch (err) {
-      this.logger.error(`findOne:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`findOne:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

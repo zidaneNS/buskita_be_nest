@@ -5,6 +5,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { User } from 'src/models/users.model';
 import responseTemplate from 'src/helpers/responseTemplate';
 import { Role } from 'src/models/roles.model';
+import generateErrMsg from 'src/helpers/generateErrMsg';
 
 @Injectable()
 export class UsersService {
@@ -26,10 +27,11 @@ export class UsersService {
         data
       })
     } catch (err) {
-      this.logger.error(`findAll:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`findAll:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -52,10 +54,11 @@ export class UsersService {
   
       throw new HttpException('user not found', HttpStatus.NOT_FOUND)
     } catch (err) {
-      this.logger.error(`findOne:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`findOne:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

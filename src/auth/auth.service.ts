@@ -6,6 +6,7 @@ import { DefaultResponse } from 'src/app.contract';
 import bcrypt from 'bcrypt';
 import responseTemplate from 'src/helpers/responseTemplate';
 import { JwtService } from '@nestjs/jwt';
+import generateErrMsg from 'src/helpers/generateErrMsg';
 
 @Injectable()
 export class AuthService {
@@ -38,10 +39,11 @@ export class AuthService {
         data: await this.jwtService.signAsync(data)
       });
     } catch (err) {
-      this.logger.error(`signin:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`signin:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -87,10 +89,11 @@ export class AuthService {
         } as User
       });
     } catch (err) {
-      this.logger.error(`signup:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`signup:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

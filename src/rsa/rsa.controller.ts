@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Logger, Pos
 import { RsaService } from './rsa.service';
 import { DecryptRequest, EncryptRequest, GenerateEValueRequest, GenerateEValueResponse, GenerateKeyRequest, GenerateKeyResponse } from './rsa.contract';
 import { DefaultResponse } from 'src/app.contract';
+import generateErrMsg from 'src/helpers/generateErrMsg';
 
 
 @Controller('rsa')
@@ -18,9 +19,10 @@ export class RsaController {
 
       return this.rsaService.generateEValue(body);
     } catch (err) {
-      this.logger.error(`generateEvalue:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`generateEvalue:::ERROR: ${errMessage}`);
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
   
@@ -33,9 +35,10 @@ export class RsaController {
 
       return this.rsaService.generateKey(body);
     } catch (err) {
-      this.logger.error(`generateKey:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`generateKey:::ERROR: ${errMessage}`);
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -47,9 +50,10 @@ export class RsaController {
 
       return this.rsaService.encrypt(query);
     } catch (err) {
-      this.logger.error(`encrypt:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`encrypt:::ERROR: ${errMessage}`);
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -61,9 +65,10 @@ export class RsaController {
 
       return this.rsaService.decrypt(query);
     } catch (err) {
-      this.logger.error(`decrypt:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`decrypt:::ERROR: ${errMessage}`);
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

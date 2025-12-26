@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Logger, Param, Post, Put, UseGuards, UsePipes } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Logger, Param, Post, Put, UseGuards, UsePipes } from '@nestjs/common';
 import { SchedulesService } from './schedules.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from 'src/auth/auth.guard';
@@ -7,6 +7,7 @@ import { CreateScheduleRequest, FindAllScheduleResponse, FindOneScheduleResponse
 import { RolesGuard } from 'src/roles/roles.guard';
 import { ROLE, Roles } from 'src/roles/roles.decorator';
 import { ModelValidationPipe } from 'src/app.validation';
+import generateErrMsg from 'src/helpers/generateErrMsg';
 
 @Controller('schedules')
 export class SchedulesController {
@@ -22,10 +23,11 @@ export class SchedulesController {
 
       return this.schedulesService.findAll();
     } catch (err) {
-      this.logger.error(`findAll:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`findAll:::ERROR: ${errMessage}`);
       
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -41,10 +43,11 @@ export class SchedulesController {
 
       return this.schedulesService.create(body);
     } catch (err) {
-      this.logger.error(`create:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`create:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -61,10 +64,30 @@ export class SchedulesController {
 
       return this.schedulesService.update(body, scheduleId);
     } catch (err) {
-      this.logger.error(`update:::ERROR ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`update:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(ROLE.SuperAdmin, ROLE.Admin)
+  @Delete(':scheduleId')
+  async delete(@Param('scheduleId') scheduleId: string): Promise<DefaultResponse<null>> {
+    try {
+      this.logger.log('---DELETE---');
+      this.logger.log(`delete:::scheduleId: ${scheduleId}`);
+
+      return this.schedulesService.delete(scheduleId);
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`delete:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

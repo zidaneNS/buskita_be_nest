@@ -5,6 +5,7 @@ import responseTemplate from 'src/helpers/responseTemplate';
 import { Bus } from 'src/models/buses.model';
 import { CreateBusRequest, FindOneBusResponse, FindAllBusesResponse } from './buses.contract';
 import { v4 as uuid } from 'uuid';
+import generateErrMsg from 'src/helpers/generateErrMsg';
 
 @Injectable()
 export class BusesService {
@@ -21,10 +22,11 @@ export class BusesService {
       const data = await this.busRepositories.findAll() || [];
       return responseTemplate(HttpStatus.OK, 'get all buses', { data })
     } catch (err) {
-      this.logger.error(`findAll:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`findAll:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -46,10 +48,11 @@ export class BusesService {
 
       return responseTemplate(HttpStatus.OK, 'bus successfully created', { data: bus });
     } catch (err) {
-      this.logger.error(`create:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`create:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -67,10 +70,11 @@ export class BusesService {
 
       return responseTemplate(HttpStatus.OK, 'bus successfully updated', { data: bus });
     } catch (err) {
-      this.logger.error(`update:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`update:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -91,10 +95,11 @@ export class BusesService {
       
       return responseTemplate(HttpStatus.NO_CONTENT, 'bus successfully deleted');
     } catch (err) {
-      this.logger.error(`delete:::ERROR: ${JSON.stringify(err)}`);
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`delete:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }
