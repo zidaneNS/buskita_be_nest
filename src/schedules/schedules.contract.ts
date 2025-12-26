@@ -11,6 +11,9 @@ export class CreateScheduleRequest {
 
   @ApiProperty()
   routeId: string;
+
+  @ApiProperty()
+  isClosed: boolean;
 }
 
 export class FindOneScheduleResponse {
@@ -26,5 +29,6 @@ export class FindAllScheduleResponse {
 export const scheduleSchema = z.object({
   time: z.string().min(1),
   busId: z.string().min(1),
-  routeId: z.string().min(1)
+  routeId: z.string().min(1),
+  isClosed: z.boolean()
 }).required();

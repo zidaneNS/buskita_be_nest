@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { DefaultResponse } from 'src/app.contract';
 import { Schedule } from 'src/models/schedules.model';
@@ -47,8 +47,6 @@ export class SchedulesService {
     }
   }
 
-  // async findOne
-
   async create(body: CreateScheduleRequest): Promise<DefaultResponse<FindOneScheduleResponse>> {
     try {
       this.logger.log('---CREATE---');
@@ -91,6 +89,47 @@ export class SchedulesService {
     } catch (err) {
       this.logger.error(`create:::ERROR: ${JSON.stringify(err)}`);
       this.logger.error(err);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async update(body: CreateScheduleRequest, scheduleId: string): Promise<DefaultResponse<FindOneScheduleResponse>> {
+    try {
+      this.logger.log('---UPDATE---');
+      this.logger.log(`update:::body: ${JSON.stringify(body)}`);
+      this.logger.log(`update:::scheduleId: ${scheduleId}`);
+
+      const schedule = await this.scheduleRepositories.findByPk(scheduleId);
+      if (!schedule) throw new BadRequestException(`schedule with id ${scheduleId} not found`);
+
+      await schedule.update({...body});
+
+      return responseTemplate(HttpStatus.OK, 'schedule updated', { data: schedule });
+    } catch (err) {
+      this.logger.error(`update:::ERROR: ${JSON.stringify(err)}`);
+      this.logger.error(err);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async delete(scheduleId: string): Promise<DefaultResponse<null>> {
+    try {
+      this.logger.log('---DELETE---');
+      this.logger.log(`delete:::scheduleId: ${scheduleId}`);
+
+      const schedule = await this.scheduleRepositories.findByPk(scheduleId);
+
+      if (!schedule) throw new BadRequestException(`schedule with id ${scheduleId} not found`);
+
+      await schedule.destroy();
+
+      return responseTemplate(HttpStatus.NO_CONTENT, 'schedule successfully deleted');
+    } catch (err) {
+      this.logger.error(`delete:::ERROR: ${JSON.stringify(err)}`);
 
       if (err instanceof HttpException) throw err;
       throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);

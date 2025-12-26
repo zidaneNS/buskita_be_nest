@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Logger, Post, UseGuards, UsePipes } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, HttpStatus, Logger, Param, Post, Put, UseGuards, UsePipes } from '@nestjs/common';
 import { SchedulesService } from './schedules.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from 'src/auth/auth.guard';
@@ -42,6 +42,26 @@ export class SchedulesController {
       return this.schedulesService.create(body);
     } catch (err) {
       this.logger.error(`create:::ERROR: ${JSON.stringify(err)}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(ROLE.SuperAdmin, ROLE.Admin)
+  @UsePipes(new ModelValidationPipe(scheduleSchema))
+  @Put(':scheduleId')
+  async update(@Body() body: CreateScheduleRequest, @Param('scheduleId') scheduleId: string): Promise<DefaultResponse<FindOneScheduleResponse>> {
+    try {
+      this.logger.log('---UPDATE---');
+      this.logger.log(`update:::body: ${JSON.stringify(body)}`);
+      this.logger.log(`update:::scheduleId: ${scheduleId}`);
+
+      return this.schedulesService.update(body, scheduleId);
+    } catch (err) {
+      this.logger.error(`update:::ERROR ${JSON.stringify(err)}`);
 
       if (err instanceof HttpException) throw err;
       throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);

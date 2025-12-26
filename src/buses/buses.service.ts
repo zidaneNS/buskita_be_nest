@@ -57,6 +57,7 @@ export class BusesService {
     try {
       this.logger.log('---UPDATE---');
       this.logger.log(`update:::body: ${JSON.stringify(body)}`);
+      this.logger.log(`update:::busId: ${busId}`);
 
       const bus = await this.busRepositories.findOne({ where: { busId }});
 

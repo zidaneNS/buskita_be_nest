@@ -17,6 +17,9 @@ export class Schedule extends Model {
   @Column
   time: Date;
 
+  @Column
+  isClosed: boolean;
+
   @ForeignKey(() => Bus)
   @Column
   busId: string;

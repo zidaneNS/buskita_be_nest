@@ -7,11 +7,15 @@ export class ModelValidationPipe implements PipeTransform {
 
   transform(value: any, metadata: ArgumentMetadata) {
     try {
+
       this.logger.log(`transform:::value: ${JSON.stringify(value)}`);
       this.logger.log(`transform:::metadata: ${JSON.stringify(metadata)}`);
 
-      const parsed = this.schema.parse(value);
-      return parsed;
+      if (metadata.type === 'body') {
+        const parsed = this.schema.parse(value);
+        return parsed;
+      }
+      return value;
     } catch (err) {
       this.logger.error(`transform:::ERROR: ${JSON.stringify(err)}`);
       throw new BadRequestException('Validation failed');
