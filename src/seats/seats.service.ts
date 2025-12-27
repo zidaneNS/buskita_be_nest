@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { DefaultResponse } from 'src/app.contract';
 import { Seat } from 'src/models/seats.model';
 import { User } from 'src/models/users.model';
-import { FindAllSeatResponse, FindOneSeatResponse } from './seats.contract';
+import { FindAllSeatResponse, FindOneSeatResponse, UpdateSeatRequest } from './seats.contract';
 import generateErrMsg from 'src/helpers/generateErrMsg';
 import { Schedule } from 'src/models/schedules.model';
 import responseTemplate from 'src/helpers/responseTemplate';
@@ -26,7 +26,7 @@ export class SeatsService {
     private scheduleUserRepositories: typeof ScheduleUser,
 
     private readonly sequelize: Sequelize,
-  ) {}
+  ) { }
 
   private readonly logger = new Logger('SeatService');
 
@@ -96,12 +96,97 @@ export class SeatsService {
 
       await transaction.commit();
 
-      return responseTemplate(HttpStatus.CREATED, 'successfully attach', { data: seat });
+      return responseTemplate(HttpStatus.CREATED, `successfully attach seat number ${seatData.seatNumber}`, { data: seat });
 
     } catch (err) {
       await transaction.rollback();
       const errMessage = generateErrMsg(err);
       this.logger.error(`attach:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async detach(seatId: string): Promise<DefaultResponse<null>> {
+    const transaction = await this.sequelize.transaction();
+    try {
+      this.logger.log('---DETACH---');
+      this.logger.log(`detach:::seatId: ${seatId}`);
+
+      const foundSeat = await this.seatRepositories.findByPk(seatId);
+      if (!foundSeat) throw new NotFoundException(`seat with ${seatId} not found`);
+      const seat = foundSeat.get() as Seat;
+      const userId = seat.userId;
+      const scheduleId = seat.scheduleId;
+
+      foundSeat.update(
+        { userId: null },
+        { transaction }
+      );
+
+      await this.scheduleUserRepositories.destroy({
+        where: {
+          scheduleId,
+          userId
+        },
+        transaction
+      });
+
+      await transaction.commit();
+
+      return responseTemplate(HttpStatus.NO_CONTENT, `detach seat number ${seat.seatNumber} successfully`);
+    } catch (err) {
+      await transaction.rollback();
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`detach:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async update(currentSeatId: string, body: UpdateSeatRequest): Promise<DefaultResponse<FindOneSeatResponse>> {
+    const transaction = await this.sequelize.transaction();
+    try {
+      this.logger.log('---UPDATE---');
+      this.logger.log(`update:::currentSeatId: ${currentSeatId}`);
+      this.logger.log(`update:::body: ${JSON.stringify(body)}`);
+
+      const { seatId } = body;
+
+      const foundCurrSeat = await this.seatRepositories.findByPk(currentSeatId);
+      if (!foundCurrSeat) throw new NotFoundException(`current seat with id ${currentSeatId} not found`);
+
+      await foundCurrSeat.update(
+        { userId: null },
+        { transaction }
+      );
+
+      const currSeat = foundCurrSeat.get() as Seat;
+
+      const userId = currSeat.userId;
+      if (!userId) throw new BadRequestException('seat is not belongs to you');
+
+      const foundSeat = await this.seatRepositories.findByPk(seatId);
+      if (!foundSeat) throw new NotFoundException(`seat with id ${seatId} not found`);
+
+      const seat = foundSeat.get() as Seat;
+
+      if (seat.userId) throw new BadRequestException('this seat not empty');
+
+      await foundSeat.update(
+        { userId },
+        { transaction }
+      );
+
+      await transaction.commit();
+
+      return responseTemplate(HttpStatus.OK, `your new seat number is ${seat.seatNumber}`, { data: foundSeat });
+    } catch (err) {
+      await transaction.rollback();
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`update:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);

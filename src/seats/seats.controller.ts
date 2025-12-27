@@ -1,11 +1,11 @@
-import { Controller, Get, HttpException, HttpStatus, Logger, Param, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Logger, Param, Patch, Req, UseGuards } from '@nestjs/common';
 import { SeatsService } from './seats.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { RolesGuard } from 'src/roles/roles.guard';
 import { ROLE, Roles } from 'src/roles/roles.decorator';
 import { DefaultResponse } from 'src/app.contract';
-import { FindAllSeatResponse, FindOneSeatResponse } from './seats.contract';
+import { FindAllSeatResponse, FindOneSeatResponse, UpdateSeatRequest } from './seats.contract';
 import generateErrMsg from 'src/helpers/generateErrMsg';
 import type { Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
@@ -57,6 +57,45 @@ export class SeatsController {
     } catch (err) {
       const errMessage = generateErrMsg(err);
       this.logger.error(`attach:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, SeatPolicyGuard)
+  @Actions(ACTION.Delete)
+  @Delete('/detach/:seatId')
+  async detach(@Param('seatId') seatId: string): Promise<DefaultResponse<null>> {
+    try {
+      this.logger.log('---DETACH---');
+      this.logger.log(`detach:::seatId: ${seatId}`);
+
+      return this.seatsService.detach(seatId);
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`detach:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, SeatPolicyGuard)
+  @Actions(ACTION.Update)
+  @Patch(':seatId')
+  async update(@Param('seatId') seatId: string, @Body() body: UpdateSeatRequest): Promise<DefaultResponse<FindOneSeatResponse>> {
+    try {
+      this.logger.log('---UPDATE---');
+      this.logger.log(`update:::seatId: ${seatId}`);
+      this.logger.log(`update:::body: ${JSON.stringify(body)}`);
+
+      return this.seatsService.update(seatId, body);
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`update:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);

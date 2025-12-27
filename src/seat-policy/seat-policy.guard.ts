@@ -5,8 +5,10 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Request } from 'express';
 import { Observable } from 'rxjs';
 import { ACTION, ACTION_KEY } from 'src/actions/actions.decorator';
+import { Role } from 'src/models/roles.model';
 import { Seat } from 'src/models/seats.model';
 import { User } from 'src/models/users.model';
+import { ROLE } from 'src/roles/roles.decorator';
 
 @Injectable()
 export class SeatPolicyGuard implements CanActivate {
@@ -18,6 +20,9 @@ export class SeatPolicyGuard implements CanActivate {
 
     @InjectModel(Seat)
     private seatRepositories: typeof Seat,
+
+    @InjectModel(Role)
+    private roleRepositories: typeof Role,
 
     private readonly reflector: Reflector,
   ) {}
@@ -40,18 +45,24 @@ export class SeatPolicyGuard implements CanActivate {
   
       const user = this.jwtService.decode(token) as User;
       const foundUser = await this.userRepositories.findByPk(user.userId);
-  
+      const foundRole = await this.roleRepositories.findByPk(user.roleId);
+
+      if (!foundRole) throw new NotFoundException(`role with id ${user.roleId} not found`);
       if (!foundUser) throw new NotFoundException(`user not with id ${user.userId} not found`);
+
+      const role = foundRole.get() as Role;
   
-      const seat = await this.seatRepositories.findByPk(seatId);
-      if (!seat) throw new NotFoundException(`seat with id ${seatId} not found`);
+      const foundSeat = await this.seatRepositories.findByPk(seatId);
+      if (!foundSeat) throw new NotFoundException(`seat with id ${seatId} not found`);
+      const seat = foundSeat.get() as Seat;
       
       if (requiredActions.some(action => action === ACTION.Update || action === ACTION.Delete)) {
-        return seat.userId === user.userId;
+        return seat.userId === user.userId || role.name !== ROLE.User;
       }
       
       return true;
     } catch (err) {
+      console.error(err);
       return false;
     }
   }
