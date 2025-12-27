@@ -1,4 +1,4 @@
-import { Controller, Get, HttpException, HttpStatus, Logger, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Logger, Param, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { DefaultResponse } from 'src/app.contract';
 import { FindAllUsersResponse, FindOneUserResponse } from './users.contract';
@@ -8,14 +8,19 @@ import { ROLE, Roles } from 'src/roles/roles.decorator';
 import { RolesGuard } from 'src/roles/roles.guard';
 import { UsersGuard } from './users.guard';
 import generateErrMsg from 'src/helpers/generateErrMsg';
+import type { Request } from 'express';
+import { JwtService } from '@nestjs/jwt';
+import { User } from 'src/models/users.model';
+import responseTemplate from 'src/helpers/responseTemplate';
 
 @Controller('users')
 export class UsersController {
   constructor(
-    private readonly usersService: UsersService
-  ) {}
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+  ) { }
   private readonly logger = new Logger('UsersController');
-  
+
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(ROLE.SuperAdmin)
@@ -33,7 +38,31 @@ export class UsersController {
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+  
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Get('/info')
+  async getInfo(@Req() req: Request): Promise<DefaultResponse<FindOneUserResponse>> {
+    try {
+      this.logger.log('---GET INFO---');
 
+      const [_, token] = req.headers.authorization?.split(' ') ?? [];
+
+      if (!token) throw new UnauthorizedException();
+
+      const { iat, exp, ...decoded } = this.jwtService.decode(token);
+      const user = decoded as User;
+
+      return responseTemplate(HttpStatus.OK, 'get user info', { data: user });
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`getInfo:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+  
   @ApiBearerAuth()
   @UseGuards(AuthGuard, UsersGuard)
   @Get(':userId')
@@ -41,7 +70,7 @@ export class UsersController {
     try {
       this.logger.log('---FIND ONE---');
       this.logger.log(`findOne:::params: ${JSON.stringify(userId)}`);
-      
+
       return this.usersService.findOne(userId);
     } catch (err) {
       const errMessage = generateErrMsg(err);
@@ -51,4 +80,5 @@ export class UsersController {
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
 }
