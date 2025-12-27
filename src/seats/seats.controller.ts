@@ -101,4 +101,23 @@ export class SeatsController {
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(ROLE.Admin, ROLE.SuperAdmin)
+  @Patch('/verify/:seatId')
+  async verify(@Param('seatId') seatId: string): Promise<DefaultResponse<FindOneSeatResponse>> {
+    try {
+      this.logger.log('---VERIFY---');
+      this.logger.log(`verify:::seatId: ${seatId}`);
+
+      return this.seatsService.verify(seatId);
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`verify:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 }

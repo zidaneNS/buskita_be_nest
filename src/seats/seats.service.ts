@@ -192,4 +192,24 @@ export class SeatsService {
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  async verify(seatId: string): Promise<DefaultResponse<FindOneSeatResponse>> {
+    try {
+      this.logger.log('---VERIFY---');
+      this.logger.log(`verify:::seatId: ${seatId}`);
+
+      const foundSeat = await this.seatRepositories.findByPk(seatId);
+      if (!foundSeat) throw new NotFoundException(`seat with id ${seatId} not found`);
+
+      await foundSeat.update({ verified: true });
+
+      return responseTemplate(HttpStatus.OK, 'verified', { data: foundSeat });
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`verify:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 }
