@@ -6,6 +6,7 @@ import { Seat } from 'src/models/seats.model';
 import { User } from 'src/models/users.model';
 import { Role } from 'src/models/roles.model';
 import { Schedule } from 'src/models/schedules.model';
+import { ScheduleUser } from 'src/models/schedule_user.model';
 
 @Module({
   controllers: [SeatsController],
@@ -15,7 +16,8 @@ import { Schedule } from 'src/models/schedules.model';
       Seat,
       User,
       Role,
-      Schedule
+      Schedule,
+      ScheduleUser
     ])
   ]
 })
