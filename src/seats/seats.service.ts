@@ -65,7 +65,7 @@ export class SeatsService {
       if (!seat) throw new NotFoundException(`seat with id ${seatId} not found`);
 
       const seatData = seat.get() as Seat;
-      if (seatData.user) throw new BadRequestException('seat is occupied');
+      if (seatData.userId) throw new BadRequestException('seat is occupied');
 
       const foundUser = await this.userRepositories.findByPk(user.userId, {
         include: [
@@ -158,15 +158,15 @@ export class SeatsService {
       const foundCurrSeat = await this.seatRepositories.findByPk(currentSeatId);
       if (!foundCurrSeat) throw new NotFoundException(`current seat with id ${currentSeatId} not found`);
 
-      await foundCurrSeat.update(
-        { userId: null },
-        { transaction }
-      );
-
       const currSeat = foundCurrSeat.get() as Seat;
 
       const userId = currSeat.userId;
       if (!userId) throw new BadRequestException('seat is not belongs to you');
+
+      await foundCurrSeat.update(
+        { userId: null },
+        { transaction }
+      );
 
       const foundSeat = await this.seatRepositories.findByPk(seatId);
       if (!foundSeat) throw new NotFoundException(`seat with id ${seatId} not found`);
