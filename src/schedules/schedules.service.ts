@@ -37,7 +37,8 @@ export class SchedulesService {
         include: [
           Bus,
           Seat,
-          User
+          User,
+          Route
         ]
       });
 

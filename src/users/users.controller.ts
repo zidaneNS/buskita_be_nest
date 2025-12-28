@@ -53,7 +53,7 @@ export class UsersController {
       const { iat, exp, ...decoded } = this.jwtService.decode(token);
       const user = decoded as User;
 
-      return responseTemplate(HttpStatus.OK, 'get user info', { data: user });
+      return this.usersService.findOne(user.userId);
     } catch (err) {
       const errMessage = generateErrMsg(err);
       this.logger.error(`getInfo:::ERROR: ${errMessage}`);
