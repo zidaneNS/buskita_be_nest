@@ -35,7 +35,7 @@ export class AuthService {
   
       if (!matched) throw new UnauthorizedException();
   
-      return responseTemplate(HttpStatus.OK, 'login succeed', {
+      return responseTemplate(HttpStatus.CREATED, 'login succeed', {
         data: await this.jwtService.signAsync(data)
       });
     } catch (err) {

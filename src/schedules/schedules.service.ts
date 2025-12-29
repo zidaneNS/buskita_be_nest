@@ -25,6 +25,9 @@ export class SchedulesService {
 
     @InjectModel(Seat)
     private seatRepositories: typeof Seat,
+
+    @InjectModel(User)
+    private userRepositories: typeof User
   ) {}
 
   private readonly logger = new Logger('SchedulesService');
@@ -56,6 +59,59 @@ export class SchedulesService {
     } catch (err) {
       const errMessage = generateErrMsg(err);
       this.logger.error(`findAll:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async findOne(scheduleId: string): Promise<DefaultResponse<FindOneScheduleResponse>> {
+    try {
+      this.logger.log('---FIND ONE---');
+      this.logger.log(`findOne:::scheduleId: ${scheduleId}`);
+
+      const foundSchedule = await this.scheduleRepositories.findByPk(scheduleId, {
+        include: [
+          Bus,
+          Seat,
+          Route,
+          User
+        ]
+      });
+      if (!foundSchedule) throw new NotFoundException(`schedule with id ${scheduleId} not found`);
+
+      return responseTemplate(HttpStatus.OK, 'schedule found', { data: foundSchedule });
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`findOne:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async findScheduleByUser(user: User): Promise<DefaultResponse<FindAllScheduleResponse>> {
+    try {
+      this.logger.log('---FIND SCHEDULE BY USER---');
+      const foundUser = await this.userRepositories.findByPk(user.userId, {
+        include: [
+          {
+            model: Schedule,
+            include: [
+              Bus
+            ]
+          }
+        ]
+      });
+      if (!foundUser) throw new NotFoundException('user not found');
+
+      const userData = foundUser.get() as User;
+      const foundSchedules = userData.schedules.map(s => s.get()) || [] as Schedule[];
+
+      return responseTemplate(HttpStatus.OK, `${foundSchedules.length} schedules by user`, { data: foundSchedules });
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`findScheduleByUser:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);

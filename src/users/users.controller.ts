@@ -23,7 +23,7 @@ export class UsersController {
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(ROLE.SuperAdmin)
+  @Roles(ROLE.SuperAdmin, ROLE.Admin)
   @Get()
   async findAll(): Promise<DefaultResponse<FindAllUsersResponse>> {
     try {
@@ -38,7 +38,7 @@ export class UsersController {
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-  
+
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   @Get('/info')
@@ -62,7 +62,7 @@ export class UsersController {
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-  
+
   @ApiBearerAuth()
   @UseGuards(AuthGuard, UsersGuard)
   @Get(':userId')

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, Logger, Param, Post, Put, UseGuards, UsePipes } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Logger, Param, Post, Put, Req, UnauthorizedException, UseGuards, UsePipes } from '@nestjs/common';
 import { SchedulesService } from './schedules.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from 'src/auth/auth.guard';
@@ -8,10 +8,17 @@ import { RolesGuard } from 'src/roles/roles.guard';
 import { ROLE, Roles } from 'src/roles/roles.decorator';
 import { ModelValidationPipe } from 'src/app.validation';
 import generateErrMsg from 'src/helpers/generateErrMsg';
+import type { Request } from 'express';
+import { JwtService } from '@nestjs/jwt';
+import { User } from 'src/models/users.model';
 
 @Controller('schedules')
 export class SchedulesController {
-  constructor(private readonly schedulesService: SchedulesService) {}
+  constructor(
+    private readonly schedulesService: SchedulesService,
+
+    private readonly jwtService: JwtService,
+  ) {}
   private readonly logger = new Logger('SchedulesController');
 
   @ApiBearerAuth()
@@ -26,6 +33,48 @@ export class SchedulesController {
       const errMessage = generateErrMsg(err);
       this.logger.error(`findAll:::ERROR: ${errMessage}`);
       
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Get('/user')
+  async findScheduleByUser(@Req() req: Request): Promise<DefaultResponse<FindAllScheduleResponse>> {
+    try {
+      this.logger.log('---FIND SCHEDULE BY USER---');
+
+      const [_, token] = req.headers.authorization?.split(' ') ?? [];
+
+      if (!token) throw new UnauthorizedException();
+      const {iat, exp, ...decoded} = this.jwtService.decode(token);
+
+      const user = decoded as User;
+
+      return this.schedulesService.findScheduleByUser(user);
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`findScheduleByUser:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Get(':scheduleId')
+  async findOne(@Param('scheduleId') scheduleId: string): Promise<DefaultResponse<FindOneScheduleResponse>> {
+    try {
+      this.logger.log('---FIND ONE---');
+      this.logger.log(`findOne:::scheduleId: ${scheduleId}`);
+
+      return this.schedulesService.findOne(scheduleId);
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`findOne:::ERROR: ${errMessage}`);
+
       if (err instanceof HttpException) throw err;
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }

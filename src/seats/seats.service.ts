@@ -41,9 +41,16 @@ export class SeatsService {
       });
 
       if (!schedule) throw new NotFoundException(`schedule with id ${scheduleId} not found`);
-
-      const scheduleData = schedule.get() as Schedule;
-      const seats = scheduleData.seats;
+      
+      const foundSeats = await this.seatRepositories.findAll({
+        where: {
+          scheduleId: scheduleId
+        },
+        include: [
+          User
+        ]
+      })
+      const seats = foundSeats.map(seat => seat.get()) as Seat[];
 
       return responseTemplate(HttpStatus.OK, `seats from schedule ${scheduleId}`, { data: seats });
     } catch (err) {
