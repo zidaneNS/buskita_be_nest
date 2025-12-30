@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Logger, Post, Query } from '@nestjs/common';
 import { RsaService } from './rsa.service';
-import { DecryptRequest, EncryptRequest, GenerateEValueRequest, GenerateEValueResponse, GenerateKeyRequest, GenerateKeyResponse } from './rsa.contract';
+import { DecryptRequest, EncryptRequest, GenerateEValueRequest, GenerateEValueResponse, GenerateKeyRequest, GenerateKeyResponse, GetKeyResponse } from './rsa.contract';
 import { DefaultResponse } from 'src/app.contract';
 import generateErrMsg from 'src/helpers/generateErrMsg';
 
@@ -21,6 +21,21 @@ export class RsaController {
     } catch (err) {
       const errMessage = generateErrMsg(err);
       this.logger.error(`generateEvalue:::ERROR: ${errMessage}`);
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Get('get-key')
+  getKey(): DefaultResponse<GetKeyResponse> {
+    try {
+      this.logger.log('---GET KEY---');
+
+      return this.rsaService.getKey();
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`getKey:::ERROR: ${errMessage}`);
+
       if (err instanceof HttpException) throw err;
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }

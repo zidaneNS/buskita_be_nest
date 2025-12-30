@@ -1,9 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
 
-export class RsaApiContract {
-
-}
-
 export class GenerateEValueRequest {
   @ApiProperty({ default: 20113 })
   pValue: number;
@@ -53,4 +49,9 @@ export class GenerateKeyResponse {
 
   @ApiProperty()
   privateKey: PrivateKey;
+}
+
+export class GetKeyResponse {
+  @ApiProperty()
+  data: PublicKey;
 }
