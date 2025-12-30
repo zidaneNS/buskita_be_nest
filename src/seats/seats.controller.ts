@@ -23,8 +23,7 @@ export class SeatsController {
   private readonly logger = new Logger('SeatController');
 
   @ApiBearerAuth()
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(ROLE.SuperAdmin, ROLE.Admin)
+  @UseGuards(AuthGuard)
   @Get(':scheduleId')
   async findAll(@Param('scheduleId') scheduleId: string): Promise<DefaultResponse<FindAllSeatResponse>> {
     try {

@@ -4,6 +4,7 @@ import { BusesController } from './buses.controller';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { Bus } from 'src/models/buses.model';
 import { Role } from 'src/models/roles.model';
+import { Schedule } from 'src/models/schedules.model';
 
 @Module({
   controllers: [BusesController],
@@ -12,6 +13,7 @@ import { Role } from 'src/models/roles.model';
     SequelizeModule.forFeature([
       Bus,
       Role,
+      Schedule
     ])
   ]
 })

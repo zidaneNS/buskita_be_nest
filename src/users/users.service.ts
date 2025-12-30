@@ -20,7 +20,8 @@ export class UsersService {
       this.logger.log('---FIND ALL---');
 
       const data = await this.userRepositories.findAll({
-        attributes: { exclude: ['password'] }
+        attributes: { exclude: ['password'] },
+        include: [Role]
       });
   
       return responseTemplate(HttpStatus.OK, 'find all users', {

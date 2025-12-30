@@ -15,8 +15,7 @@ export class BusesController {
   private readonly logger = new Logger('BusesController');
 
   @ApiBearerAuth()
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(ROLE.SuperAdmin, ROLE.Admin)
+  @UseGuards(AuthGuard)
   @Get()
   async findAll(): Promise<DefaultResponse<FindAllBusesResponse>> {
     try {
@@ -25,6 +24,24 @@ export class BusesController {
     } catch (err) {
       const errMessage = generateErrMsg(err);
       this.logger.error(`findAll:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Get('schedule/:scheduleId')
+  async findBySchedule(@Param('scheduleId') scheduleId: string): Promise<DefaultResponse<FindOneBusResponse>> {
+    try {
+      this.logger.log('---FIND BY SCHEDULE---');
+      this.logger.log(`findBySchedule:::scheduleId: ${scheduleId}`);
+
+      return this.busesService.findBySchedule(scheduleId);
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`findBySchedule:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
