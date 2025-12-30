@@ -86,20 +86,21 @@ export class SeatsService {
       const foundSchedule = await this.scheduleRepositories.findByPk(seatData.scheduleId);
       if (!foundSchedule) throw new NotFoundException(`schedule with id ${seat.scheduleId} not found`);
 
+      const schedule = foundSchedule.get() as Schedule;
+      if (schedule.isClosed) throw new BadRequestException('schedule closed');
+
       await seat.update(
         { userId: user.userId },
         { transaction }
       );
 
-      const scheduleUser = await this.scheduleUserRepositories.findOrCreate({
+      await this.scheduleUserRepositories.findOrCreate({
         where: {
           scheduleId: seatData.scheduleId,
           userId: user.userId
         },
         transaction
       });
-
-      console.log('schedule user', scheduleUser);
 
       await transaction.commit();
 

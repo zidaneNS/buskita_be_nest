@@ -10,6 +10,8 @@ import { v4 as uuid } from 'uuid';
 import { Seat } from 'src/models/seats.model';
 import { User } from 'src/models/users.model';
 import generateErrMsg from 'src/helpers/generateErrMsg';
+import { Sequelize } from 'sequelize-typescript';
+import { ScheduleUser } from 'src/models/schedule_user.model';
 
 @Injectable()
 export class SchedulesService {
@@ -27,7 +29,12 @@ export class SchedulesService {
     private seatRepositories: typeof Seat,
 
     @InjectModel(User)
-    private userRepositories: typeof User
+    private userRepositories: typeof User,
+
+    @InjectModel(ScheduleUser)
+    private scheduleUserRepositories: typeof ScheduleUser,
+
+    private sequelize: Sequelize,
   ) {}
 
   private readonly logger = new Logger('SchedulesService');
@@ -189,18 +196,26 @@ export class SchedulesService {
   }
 
   async delete(scheduleId: string): Promise<DefaultResponse<null>> {
+    const transaction = await this.sequelize.transaction();
     try {
       this.logger.log('---DELETE---');
       this.logger.log(`delete:::scheduleId: ${scheduleId}`);
 
-      const schedule = await this.scheduleRepositories.findByPk(scheduleId);
+      const foundSchedule = await this.scheduleRepositories.findByPk(scheduleId);
 
-      if (!schedule) throw new BadRequestException(`schedule with id ${scheduleId} not found`);
+      if (!foundSchedule) throw new BadRequestException(`schedule with id ${scheduleId} not found`);
 
-      await schedule.destroy();
+      await this.scheduleUserRepositories.destroy({
+        where: { scheduleId: scheduleId },
+        transaction
+      })
+      await foundSchedule.destroy({ transaction });
+
+      await transaction.commit();
 
       return responseTemplate(HttpStatus.NO_CONTENT, 'schedule successfully deleted');
     } catch (err) {
+      await transaction.rollback();
       const errMessage = generateErrMsg(err);
       this.logger.error(`delete:::ERROR: ${errMessage}`);
 
