@@ -109,11 +109,12 @@ export class SchedulesService {
               {
                 model: Schedule,
                 include: [
-                  Bus,
                   User,
-                  Seat
+                  Seat,
+                  Route
                 ]
-              }
+              },
+              Bus
             ]
           }
         ]
