@@ -34,13 +34,11 @@ export class DecryptRequest {
 
 export class GenerateEValueResponse {
   @ApiProperty()
-  nValue: number;
-
-  @ApiProperty()
-  toitent: number;
-
-  @ApiProperty()
-  eValues: number[];
+  data: {
+    nValue: number;
+    toitent: number;
+    eValues: number[];
+  }
 }
 
 export class GenerateKeyResponse {

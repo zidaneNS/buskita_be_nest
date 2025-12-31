@@ -75,11 +75,11 @@ export class RsaService {
         curr++;
       }
 
-      return responseTemplate<GenerateEValueResponse>(HttpStatus.OK, 'generate E values', {
+      return responseTemplate<GenerateEValueResponse>(HttpStatus.OK, 'generate E values', { data: {
         nValue,
         toitent,
         eValues
-      });
+      }});
     } catch (err) {
       const errMessage = generateErrMsg(err);
       this.logger.error(`generateEValue:::ERROR: ${errMessage}`);
