@@ -1,6 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Bus } from "src/models/buses.model";
 import { Schedule } from "src/models/schedules.model";
+import { Seat } from "src/models/seats.model";
 import z from "zod";
 
 export class CreateScheduleRequest {
@@ -30,6 +31,15 @@ export class FindAllScheduleResponse {
 export class ScheduleWithSeatInfo extends Schedule {
   totalUser: number;
   totalSeats: number;
+}
+
+export class SeatWithScheduleStats extends Seat {
+  declare schedule: ScheduleWithSeatInfo;
+}
+
+export class FindAllSeatWithScheduleStats {
+  @ApiProperty()
+  data: SeatWithScheduleStats[]
 }
 
 export class BaseScheduleProperty {

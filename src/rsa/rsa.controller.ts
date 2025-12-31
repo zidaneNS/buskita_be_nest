@@ -7,7 +7,7 @@ import generateErrMsg from 'src/helpers/generateErrMsg';
 
 @Controller('rsa')
 export class RsaController {
-  constructor(private readonly rsaService: RsaService) {}
+  constructor(private readonly rsaService: RsaService) { }
   private readonly logger = new Logger('RsaController', { timestamp: true })
 
   @Post()
@@ -40,7 +40,7 @@ export class RsaController {
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-  
+
   @Post('generate-key')
   @HttpCode(200)
   generateKey(@Body() body: GenerateKeyRequest): DefaultResponse<GenerateKeyResponse> {
@@ -58,7 +58,7 @@ export class RsaController {
   }
 
   @Get('encrypt')
-  encrypt(@Query() query: EncryptRequest): DefaultResponse<string> {
+  encrypt(@Query() query: EncryptRequest): DefaultResponse<{ data: string }> {
     try {
       this.logger.log('---ENCRYPT---');
       this.logger.log(`encrypt:::query: ${JSON.stringify(query)}`);
@@ -73,7 +73,7 @@ export class RsaController {
   }
 
   @Get('decrypt')
-  decrypt(@Query() query: DecryptRequest): DefaultResponse<any> {
+  decrypt(@Query() query: DecryptRequest): DefaultResponse<{ data: string }> {
     try {
       this.logger.log('---DECRYPT---');
       this.logger.log(`decrypt:::query: ${JSON.stringify(query)}`);

@@ -2,7 +2,7 @@ import { BadRequestException, HttpException, HttpStatus, Injectable, InternalSer
 import { InjectModel } from '@nestjs/sequelize';
 import { DefaultResponse } from 'src/app.contract';
 import { Schedule } from 'src/models/schedules.model';
-import { CreateScheduleRequest, FindAllScheduleResponse, FindOneScheduleResponse, ScheduleWithSeatInfo } from './schedules.contract';
+import { CreateScheduleRequest, FindAllScheduleResponse, FindAllSeatWithScheduleStats, FindOneScheduleResponse, ScheduleWithSeatInfo, SeatWithScheduleStats } from './schedules.contract';
 import responseTemplate from 'src/helpers/responseTemplate';
 import { Bus } from 'src/models/buses.model';
 import { Route } from 'src/models/routes.model';
@@ -12,6 +12,7 @@ import { User } from 'src/models/users.model';
 import generateErrMsg from 'src/helpers/generateErrMsg';
 import { Sequelize } from 'sequelize-typescript';
 import { ScheduleUser } from 'src/models/schedule_user.model';
+import { FindAllSeatResponse } from 'src/seats/seats.contract';
 
 @Injectable()
 export class SchedulesService {
@@ -35,7 +36,7 @@ export class SchedulesService {
     private scheduleUserRepositories: typeof ScheduleUser,
 
     private sequelize: Sequelize,
-  ) {}
+  ) { }
 
   private readonly logger = new Logger('SchedulesService');
 
@@ -53,7 +54,7 @@ export class SchedulesService {
       });
 
       const scheduleWithSeatInfo: Partial<ScheduleWithSeatInfo>[] = schedules.map(item => {
-        const {users, seats, ...restData} = item.get() as Schedule;
+        const { users, seats, ...restData } = item.get() as Schedule;
 
         return {
           ...restData,
@@ -97,15 +98,22 @@ export class SchedulesService {
     }
   }
 
-  async findScheduleByUser(user: User): Promise<DefaultResponse<FindAllScheduleResponse>> {
+  async findScheduleByUser(user: User): Promise<DefaultResponse<FindAllSeatWithScheduleStats>> {
     try {
       this.logger.log('---FIND SCHEDULE BY USER---');
       const foundUser = await this.userRepositories.findByPk(user.userId, {
         include: [
           {
-            model: Schedule,
+            model: Seat,
             include: [
-              Bus
+              {
+                model: Schedule,
+                include: [
+                  Bus,
+                  User,
+                  Seat
+                ]
+              }
             ]
           }
         ]
@@ -113,9 +121,21 @@ export class SchedulesService {
       if (!foundUser) throw new NotFoundException('user not found');
 
       const userData = foundUser.get() as User;
-      const foundSchedules = userData.schedules.map(s => s.get()) || [] as Schedule[];
+      const userSeats = userData.seats.map(s => {
+        const { schedule, ...restData } = s.get() as Seat;
+        const { users, seats, ...restSchedule} = schedule.get() as Schedule;
 
-      return responseTemplate(HttpStatus.OK, `${foundSchedules.length} schedules by user`, { data: foundSchedules });
+        return {
+          ...restData,
+          schedule: {
+            ...restSchedule,
+            totalUser: users.length,
+            totalSeats: seats.length
+          }
+        }
+      }) as SeatWithScheduleStats[];
+
+      return responseTemplate(HttpStatus.OK, `${userSeats.length} schedules by user`, { data: userSeats });
     } catch (err) {
       const errMessage = generateErrMsg(err);
       this.logger.error(`findScheduleByUser:::ERROR: ${errMessage}`);
@@ -130,7 +150,7 @@ export class SchedulesService {
       this.logger.log('---CREATE---');
       this.logger.log(`create:::body: ${JSON.stringify(body)}`);
 
-      const {busId, routeId, time} = body;
+      const { busId, routeId, time } = body;
 
       const bus = await this.busRepositories.findByPk(busId);
       if (!bus) throw new NotFoundException('bus not found');
@@ -159,7 +179,7 @@ export class SchedulesService {
 
       await this.seatRepositories.bulkCreate(seatsRecord);
 
-      const foundSeats = await this.seatRepositories.count({ where: { scheduleId: schedule.get().scheduleId }});
+      const foundSeats = await this.seatRepositories.count({ where: { scheduleId: schedule.get().scheduleId } });
 
       if (totalSeats !== foundSeats) throw new InternalServerErrorException('seats not fully generated');
 
@@ -182,7 +202,7 @@ export class SchedulesService {
       const schedule = await this.scheduleRepositories.findByPk(scheduleId);
       if (!schedule) throw new BadRequestException(`schedule with id ${scheduleId} not found`);
 
-      await schedule.update({...body});
+      await schedule.update({ ...body });
 
       return responseTemplate(HttpStatus.OK, 'schedule updated', { data: schedule });
     } catch (err) {

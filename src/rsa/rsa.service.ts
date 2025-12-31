@@ -75,11 +75,13 @@ export class RsaService {
         curr++;
       }
 
-      return responseTemplate<GenerateEValueResponse>(HttpStatus.OK, 'generate E values', { data: {
-        nValue,
-        toitent,
-        eValues
-      }});
+      return responseTemplate<GenerateEValueResponse>(HttpStatus.OK, 'generate E values', {
+        data: {
+          nValue,
+          toitent,
+          eValues
+        }
+      });
     } catch (err) {
       const errMessage = generateErrMsg(err);
       this.logger.error(`generateEValue:::ERROR: ${errMessage}`);
@@ -121,7 +123,7 @@ export class RsaService {
     }
   }
 
-  encrypt(query: EncryptRequest): DefaultResponse<string> {
+  encrypt(query: EncryptRequest): DefaultResponse<{ data: string }> {
     try {
       this.logger.log('---ENCRYPT---');
       this.logger.log(`encrypt:::query: ${JSON.stringify(query)}`);
@@ -141,7 +143,7 @@ export class RsaService {
 
       console.log('cipher', cipherText);
 
-      return responseTemplate(HttpStatus.OK, 'cipher text', cipherText.join(''));
+      return responseTemplate(HttpStatus.OK, 'cipher text', { data: cipherText.join('') });
     } catch (err) {
       const errMessage = generateErrMsg(err);
       this.logger.error(`encrypt:::ERROR: ${errMessage}`);
@@ -151,7 +153,7 @@ export class RsaService {
     }
   }
 
-  decrypt(query: DecryptRequest) {
+  decrypt(query: DecryptRequest): DefaultResponse<{ data: string }> {
     try {
       this.logger.log('---DECRYPT---');
       this.logger.log(`decrypt:::query: ${JSON.stringify(query)}`);
@@ -176,7 +178,7 @@ export class RsaService {
 
       console.log('json', plainText.join(''));
 
-      return responseTemplate(HttpStatus.OK, 'decrypted', JSON.parse(plainText.join('')));
+      return responseTemplate(HttpStatus.OK, 'decrypted', { data: plainText.join('') });
     } catch (err) {
       const errMessage = generateErrMsg(err);
       this.logger.error(`decrypt:::ERROR: ${errMessage}`);

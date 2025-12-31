@@ -3,7 +3,7 @@ import { SchedulesService } from './schedules.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { DefaultResponse } from 'src/app.contract';
-import { CreateScheduleRequest, FindAllScheduleResponse, FindOneScheduleResponse, scheduleSchema } from './schedules.contract';
+import { CreateScheduleRequest, FindAllScheduleResponse, FindAllSeatWithScheduleStats, FindOneScheduleResponse, scheduleSchema } from './schedules.contract';
 import { RolesGuard } from 'src/roles/roles.guard';
 import { ROLE, Roles } from 'src/roles/roles.decorator';
 import { ModelValidationPipe } from 'src/app.validation';
@@ -11,6 +11,7 @@ import generateErrMsg from 'src/helpers/generateErrMsg';
 import type { Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { User } from 'src/models/users.model';
+import { FindAllSeatResponse } from 'src/seats/seats.contract';
 
 @Controller('schedules')
 export class SchedulesController {
@@ -41,7 +42,7 @@ export class SchedulesController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   @Get('/user')
-  async findScheduleByUser(@Req() req: Request): Promise<DefaultResponse<FindAllScheduleResponse>> {
+  async findScheduleByUser(@Req() req: Request): Promise<DefaultResponse<FindAllSeatWithScheduleStats>> {
     try {
       this.logger.log('---FIND SCHEDULE BY USER---');
 
