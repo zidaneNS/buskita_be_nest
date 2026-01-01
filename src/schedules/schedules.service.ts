@@ -59,7 +59,8 @@ export class SchedulesService {
         return {
           ...restData,
           totalSeats: seats.length,
-          totalUser: users.length
+          totalUser: users.length,
+          users,
         }
       });
 
@@ -131,8 +132,8 @@ export class SchedulesService {
           schedule: {
             ...restSchedule,
             totalUser: users.length,
-            totalSeats: seats.length
-          }
+            totalSeats: seats.length,
+          },
         }
       }) as SeatWithScheduleStats[];
 
@@ -147,6 +148,7 @@ export class SchedulesService {
   }
 
   async create(body: CreateScheduleRequest): Promise<DefaultResponse<FindOneScheduleResponse>> {
+    const transaction = await this.sequelize.transaction();
     try {
       this.logger.log('---CREATE---');
       this.logger.log(`create:::body: ${JSON.stringify(body)}`);
@@ -160,13 +162,14 @@ export class SchedulesService {
       if (!route) throw new NotFoundException('route not found');
 
       const totalSeats = bus.get().totalRow * bus.get().totalCol + bus.get().totalBackseat;
+      const scheduleId = uuid();
 
       const schedule = await this.scheduleRepositories.create({
-        scheduleId: uuid(),
+        scheduleId,
         time,
         routeId,
         busId
-      });
+      }, {transaction});
 
       this.logger.log(`schedule id: ${schedule.get().scheduleId}`);
 
@@ -174,18 +177,21 @@ export class SchedulesService {
         seatId: uuid(),
         seatNumber: id + 1,
         busId,
-        scheduleId: schedule.get().scheduleId,
+        scheduleId: scheduleId,
         verified: false
       }));
 
-      await this.seatRepositories.bulkCreate(seatsRecord);
+      await this.seatRepositories.bulkCreate(seatsRecord, {transaction});
 
+      await transaction.commit();
       const foundSeats = await this.seatRepositories.count({ where: { scheduleId: schedule.get().scheduleId } });
 
       if (totalSeats !== foundSeats) throw new InternalServerErrorException('seats not fully generated');
 
+
       return responseTemplate(HttpStatus.CREATED, 'schedule created', { data: schedule });
     } catch (err) {
+      await transaction.rollback();
       const errMessage = generateErrMsg(err);
       this.logger.error(`create:::ERROR: ${errMessage}`);
 
