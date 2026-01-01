@@ -42,7 +42,12 @@ import { SeatsModule } from './seats/seats.module';
         Schedule,
         ScheduleUser,
         Seat
-      ]
+      ],
+      dialectOptions: {
+        ssl: {
+          rejectUnauthorized: false
+        }
+      }
     }),
     AuthModule,
     BusesModule,
