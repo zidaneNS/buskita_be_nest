@@ -22,7 +22,8 @@ import { SeatsModule } from './seats/seats.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true
+      isGlobal: true,
+      envFilePath: process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env'
     }),
     RsaModule, 
     UsersModule,

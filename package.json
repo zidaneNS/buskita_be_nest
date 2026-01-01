@@ -9,7 +9,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
-    "start:dev": "nest start --watch",
+    "start:dev": "NODE_ENV=development nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
@@ -17,7 +17,15 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "db:up:dev": "NODE_ENV=development npx sequelize-cli db:migrate --config ./database/config/config.js --migrations-path ./database/migrations --seeders-path ./database/seeders --models-path ./database/models",
+    "db:down:dev": "NODE_ENV=development npx sequelize-cli db:migrate:undo:all --config ./database/config/config.js --migrations-path ./database/migrations --seeders-path ./database/seeders --models-path ./database/models",
+    "db:up:prod": "npx sequelize-cli db:migrate --config ./database/config/config.js --migrations-path ./database/migrations --seeders-path ./database/seeders --models-path ./database/models --env production",
+    "db:down:prod": "npx sequelize-cli db:migrate:undo:all --config ./database/config/config.js --migrations-path ./database/migrations --seeders-path ./database/seeders --models-path ./database/models --env production",
+    "db:seed:prod": "npx sequelize-cli db:seed:all --config ./database/config/config.js --seeders-path ./database/seeders --env production",
+    "db:seed:undo:prod": "npx sequelize-cli db:seed:undo:all --config ./database/config/config.js --seeders-path ./database/seeders --env production",
+    "db:seed:dev": "NODE_ENV=development npx sequelize-cli db:seed:all --config ./database/config/config.js --seeders-path ./database/seeders",
+    "db:seed:undo:dev": "NODE_ENV=development npx sequelize-cli db:seed:undo:all --config ./database/config/config.js --seeders-path ./database/seeders"
   },
   "dependencies": {
     "@casl/ability": "^6.7.5",
