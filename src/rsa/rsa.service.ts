@@ -13,8 +13,6 @@ export class RsaService {
 
   private privateKey: PrivateKey;
   private publicKey: PublicKey;
-  private nValue: number;
-  private toitent: number
 
   setPrivateKey(key: PrivateKey) {
     this.privateKey = key;
