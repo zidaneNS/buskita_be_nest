@@ -12,7 +12,8 @@ module.exports = {
       password: await bcrypt.hash('password', 10),
       phoneNumber: '0812345',
       address: 'indonesia',
-      roleId: 1
+      roleId: 1,
+      status: 'approve',
     },
     {
       userId: '181221081',
@@ -21,7 +22,8 @@ module.exports = {
       password: await bcrypt.hash('password', 10),
       phoneNumber: '081234567',
       address: 'indonesia',
-      roleId: 2
+      roleId: 2,
+      status: 'approve',
     },
    ])
   },

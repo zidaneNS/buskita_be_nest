@@ -4,6 +4,11 @@ import { Schedule } from "./schedules.model";
 import { Seat } from "./seats.model";
 import { ScheduleUser } from "./schedule_user.model";
 
+export enum USER_STATUS {
+  WaitingApproval = 'wait',
+  Approve = 'approve',
+  Reject = 'reject,'
+}
 @Table({
   timestamps: true,
   tableName: 'users'
@@ -30,6 +35,9 @@ export class User extends Model {
 
   @Column
   creditScore: number;
+
+  @Column
+  status: USER_STATUS;
 
   @ForeignKey(() => Role)
   @Column

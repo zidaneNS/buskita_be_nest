@@ -43,7 +43,7 @@ import { SeatsModule } from './seats/seats.module';
         ScheduleUser,
         Seat
       ],
-      dialectOptions: {
+      dialectOptions: process.env.NODE_ENV === 'development' ? {} : {
         ssl: {
           rejectUnauthorized: false
         }

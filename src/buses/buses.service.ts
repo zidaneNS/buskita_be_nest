@@ -71,7 +71,7 @@ export class BusesService {
         ...body
       });
 
-      return responseTemplate(HttpStatus.OK, 'bus successfully created', { data: bus });
+      return responseTemplate(HttpStatus.CREATED, 'bus successfully created', { data: bus });
     } catch (err) {
       const errMessage = generateErrMsg(err);
       this.logger.error(`create:::ERROR: ${errMessage}`);

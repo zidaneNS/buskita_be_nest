@@ -42,6 +42,12 @@ module.exports = {
         allowNull: false,
         defaultValue: 3,
       },
+      status: {
+        type: Sequelize.DataTypes.ENUM,
+        values: ['wait', 'approve', 'reject'],
+        allowNull: false,
+        defaultValue: 'wait'
+      },
       createdAt: {
         type: Sequelize.DataTypes.DATE,
         allowNull: false,
