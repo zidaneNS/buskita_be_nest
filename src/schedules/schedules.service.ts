@@ -153,7 +153,7 @@ export class SchedulesService {
       this.logger.log('---CREATE---');
       this.logger.log(`create:::body: ${JSON.stringify(body)}`);
 
-      const { busId, routeId, time } = body;
+      const { busId, routeId, time, isClosed } = body;
 
       const bus = await this.busRepositories.findByPk(busId);
       if (!bus) throw new NotFoundException('bus not found');
@@ -168,7 +168,8 @@ export class SchedulesService {
         scheduleId,
         time,
         routeId,
-        busId
+        busId,
+        isClosed
       }, {transaction});
 
       this.logger.log(`schedule id: ${schedule.get().scheduleId}`);

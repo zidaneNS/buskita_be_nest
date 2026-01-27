@@ -33,7 +33,7 @@ export class AuthService {
   
       const matched = await bcrypt.compare(password, findPassword);
   
-      if (!matched) throw new UnauthorizedException();
+      if (!matched) throw new UnauthorizedException('Wrong Credentials');
   
       return responseTemplate(HttpStatus.CREATED, 'login succeed', {
         data: await this.jwtService.signAsync(data)
