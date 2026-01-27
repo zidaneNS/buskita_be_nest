@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from 'src/models/users.model';
 import { SignInRequest, SignInResponse, SignUpRequest, SignUpResponse } from './auth.contract';
@@ -27,7 +27,7 @@ export class AuthService {
   
       const findUser = await this.userRepositories.findOne({ where: {userId} })
   
-      if (!findUser) throw new UnauthorizedException();
+      if (!findUser) throw new NotFoundException('User Not Found');
   
       const { password: findPassword, ...data } = findUser.get();
   
