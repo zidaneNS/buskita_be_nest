@@ -12,7 +12,7 @@ import { User } from 'src/models/users.model';
 import generateErrMsg from 'src/helpers/generateErrMsg';
 import { Sequelize } from 'sequelize-typescript';
 import { ScheduleUser } from 'src/models/schedule_user.model';
-import { FindAllSeatResponse } from 'src/seats/seats.contract';
+import { nanoid } from 'nanoid';
 
 @Injectable()
 export class SchedulesService {
@@ -162,7 +162,7 @@ export class SchedulesService {
       if (!route) throw new NotFoundException('route not found');
 
       const totalSeats = bus.get().totalRow * bus.get().totalCol + bus.get().totalBackseat;
-      const scheduleId = uuid();
+      const scheduleId = nanoid(6);
 
       const schedule = await this.scheduleRepositories.create({
         scheduleId,
@@ -175,7 +175,7 @@ export class SchedulesService {
       this.logger.log(`schedule id: ${schedule.get().scheduleId}`);
 
       const seatsRecord = Array.from({ length: totalSeats }, (_, id) => ({
-        seatId: uuid(),
+        seatId: `${scheduleId}-${id}`,
         seatNumber: id + 1,
         busId,
         scheduleId: scheduleId,

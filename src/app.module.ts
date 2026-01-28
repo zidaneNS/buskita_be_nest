@@ -18,6 +18,7 @@ import { SchedulesModule } from './schedules/schedules.module';
 import { RoutesController } from './routes/routes.controller';
 import { RoutesModule } from './routes/routes.module';
 import { SeatsModule } from './seats/seats.module';
+import { FileController } from './file/file.controller';
 
 @Module({
   imports: [
@@ -55,7 +56,7 @@ import { SeatsModule } from './seats/seats.module';
     RoutesModule,
     SeatsModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, FileController],
   providers: [AppService]
 })
 export class AppModule {}
