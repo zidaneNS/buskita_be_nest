@@ -1,7 +1,7 @@
 import { Controller, Get, HttpException, HttpStatus, Logger, Param, ParseFilePipeBuilder, Post, Req, Res, StreamableFile, UnauthorizedException, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { DefaultResponse } from 'src/app.contract';
-import { FindAllUsersResponse, FindOneUserResponse } from './users.contract';
+import { FindAllUsersResponse, FindOneUserResponse, UploadResponse } from './users.contract';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ROLE, Roles } from 'src/roles/roles.decorator';
@@ -85,13 +85,24 @@ export class UsersController {
   }
 
   @Post('upload')
-  @UseInterceptors(FileInterceptor('cardImage', {
+  @UseInterceptors(FileInterceptor('image', {
     dest: './upload/'
   }))
   async upload(@UploadedFile(
     new ParseFilePipeBuilder().build()
-  ) cardImage: Express.Multer.File) {
-    console.log(cardImage);
+  ) image: Express.Multer.File): Promise<DefaultResponse<UploadResponse>> {
+    try {
+      this.logger.log('---UPLOAD---');
+      this.logger.log(`upload:::image: ${JSON.stringify(image)}`);
+      const filePath = `${process.env.APP_URL}/file/${image.filename}`;
+      return responseTemplate(HttpStatus.CREATED, 'File Uploaded', { data: { filePath } });
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`upload:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
 }

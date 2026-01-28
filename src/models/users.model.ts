@@ -39,6 +39,9 @@ export class User extends Model {
   @Column
   status: USER_STATUS;
 
+  @Column
+  cardImageUrl?: string;
+
   @ForeignKey(() => Role)
   @Column
   roleId: number

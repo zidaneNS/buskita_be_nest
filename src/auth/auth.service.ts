@@ -59,7 +59,8 @@ export class AuthService {
         confirmPassword,
         address,
         phoneNumber,
-        roleId
+        roleId,
+        cardImageUrl,
       } = body
 
       if (password !== confirmPassword) throw new BadRequestException('password not match');
@@ -73,7 +74,8 @@ export class AuthService {
         password: hashedPassword,
         address,
         phoneNumber,
-        roleId
+        roleId,
+        cardImageUrl
       }
 
       const isExist = await this.userRepositories.findOne({ where: { userId }});

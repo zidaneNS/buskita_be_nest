@@ -33,6 +33,9 @@ export class SignUpRequest {
 
   @ApiProperty()
   userId: string;
+
+  @ApiProperty()
+  cardImageUrl?: string;
 }
 
 export class SignInResponse {

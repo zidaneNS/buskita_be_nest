@@ -48,6 +48,10 @@ module.exports = {
         allowNull: false,
         defaultValue: 'wait'
       },
+      cardImageUrl: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull: true,
+      },
       createdAt: {
         type: Sequelize.DataTypes.DATE,
         allowNull: false,
