@@ -1,10 +1,9 @@
 import { Controller, Get, HttpException, HttpStatus, Logger, NotFoundException, Param, ParseFilePipeBuilder, Post, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
-import { createReadStream } from 'fs';
+import { createReadStream, existsSync } from 'fs';
 import { join } from 'path';
 import { DefaultResponse } from 'src/app.contract';
-import fileIsAvailable from 'src/helpers/fileIsAvailable';
 import generateErrMsg from 'src/helpers/generateErrMsg';
 import responseTemplate from 'src/helpers/responseTemplate';
 import { UploadResponse } from 'src/users/users.contract';
@@ -39,7 +38,7 @@ export class FileController {
       this.logger.log('---CHECK FILE---');
       this.logger.log(`chechFile:::fileName: ${fileName}`);
 
-      const isExist = await fileIsAvailable(fileName);
+      const isExist = existsSync(fileName);
       if (!isExist) throw new NotFoundException(`no file with name ${fileName}`);
       return responseTemplate(HttpStatus.OK, 'file exist', { data: { isExist } });
     } catch (err) {

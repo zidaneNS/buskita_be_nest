@@ -8,7 +8,7 @@ import type { CreationOptional, InferAttributes, InferCreationAttributes } from 
 export enum USER_STATUS {
   WaitingApproval = 'wait',
   Approve = 'approve',
-  Reject = 'reject,'
+  Reject = 'reject',
 }
 @Table({
   timestamps: true,

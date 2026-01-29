@@ -1,14 +1,14 @@
 import { ConflictException, HttpException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { DefaultResponse } from 'src/app.contract';
-import { FindAllUsersResponse, FindOneUserResponse, UpdateProfileRequest } from './users.contract';
+import { FindAllUsersResponse, FindOneUserResponse, UpdateProfileRequest, ValidateUserRequest } from './users.contract';
 import { InjectModel } from '@nestjs/sequelize';
-import { User } from 'src/models/users.model';
+import { User, USER_STATUS } from 'src/models/users.model';
 import responseTemplate from 'src/helpers/responseTemplate';
 import { Role } from 'src/models/roles.model';
 import generateErrMsg from 'src/helpers/generateErrMsg';
 import { unlink } from 'node:fs/promises';
-import fileIsAvailable from 'src/helpers/fileIsAvailable';
 import { InferAttributes } from 'sequelize';
+import { existsSync } from 'node:fs';
 
 @Injectable()
 export class UsersService {
@@ -62,7 +62,7 @@ export class UsersService {
       });
 
       if (!findUser) throw new NotFoundException('user not found');
-      
+
       const user = findUser.get();
 
       const data: InferAttributes<User> = {
@@ -104,8 +104,11 @@ export class UsersService {
 
       if (cardImageUrl) {
         if (user.cardImageUrl) {
-          const isExist = await fileIsAvailable(cardImageUrl);
-          if (isExist) await unlink(`upload/${user.cardImageUrl}`);
+          const isExist = existsSync(`upload/${user.cardImageUrl}`);
+          if (isExist) {
+            this.logger.log(`deleting files ${user.cardImageUrl}...`);
+            await unlink(`upload/${user.cardImageUrl}`);
+          }
         }
       }
 
@@ -113,6 +116,7 @@ export class UsersService {
         ...user,
         userId: newUserId,
         cardImageUrl,
+        status: USER_STATUS.WaitingApproval,
         ...bodyWithOutNewUserId
       }
 
@@ -122,6 +126,33 @@ export class UsersService {
     } catch (err) {
       const errMessage = generateErrMsg(err);
       this.logger.error(`updateProfile:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async validateUser(userId: string, body: ValidateUserRequest): Promise<DefaultResponse<FindOneUserResponse>> {
+    try {
+      this.logger.log('---VALIDATE USER---');
+      this.logger.log(`validateUser:::userId: ${userId}`);
+      this.logger.log(`validateUser:::body: ${JSON.stringify(body)}`);
+
+      const foundUser = await this.userRepositories.findByPk(userId);
+      if (!foundUser) throw new NotFoundException('User Not Found');
+
+      const { isValid } = body;
+      const user = foundUser.get();
+
+      await foundUser.update({
+        ...user,
+        status: isValid ? USER_STATUS.Approve : USER_STATUS.Reject
+      });
+
+      return responseTemplate(HttpStatus.OK, 'User Status Updated', { data: foundUser });
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`validateUser:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);

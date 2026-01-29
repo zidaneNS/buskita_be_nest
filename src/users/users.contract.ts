@@ -21,6 +21,12 @@ export class UpdateProfileRequest {
   @ApiProperty()
   cardImageUrl?: string;
 }
+
+export class ValidateUserRequest {
+  @ApiProperty()
+  isValid: boolean;
+}
+
 export class FindAllUsersResponse {
   data: InferAttributes<User>[]
 }

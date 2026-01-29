@@ -1,20 +1,16 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Logger, Param, ParseFilePipeBuilder, Post, Put, Req, Res, StreamableFile, UnauthorizedException, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, HttpStatus, Logger, Param, Patch, Put, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { DefaultResponse } from 'src/app.contract';
-import { FindAllUsersResponse, FindOneUserResponse, UpdateProfileRequest, UploadResponse } from './users.contract';
+import { FindAllUsersResponse, FindOneUserResponse, UpdateProfileRequest, ValidateUserRequest } from './users.contract';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ROLE, Roles } from 'src/roles/roles.decorator';
 import { RolesGuard } from 'src/roles/roles.guard';
 import { UsersGuard } from './users.guard';
 import generateErrMsg from 'src/helpers/generateErrMsg';
-import type { Request, Response } from 'express';
+import type { Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { User } from 'src/models/users.model';
-import responseTemplate from 'src/helpers/responseTemplate';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { createReadStream } from 'node:fs';
-import { join } from 'node:path';
 
 @Controller('users')
 export class UsersController {
@@ -81,6 +77,26 @@ export class UsersController {
 
       this.logger.error(`updateProfile:::ERROR: ${errMessage}`);
 
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(ROLE.SuperAdmin, ROLE.Admin)
+  @Patch(':userId')
+  async validateUser(@Param('userId') userId: string, @Body() body: ValidateUserRequest): Promise<DefaultResponse<FindOneUserResponse>> {
+    try {
+      this.logger.log('---VALIDATE USER---');
+      this.logger.log(`validateUser:::userId: ${userId}`);
+      this.logger.log(`validateUser:::body: ${JSON.stringify(body)}`);
+
+      return this.usersService.validateUser(userId, body);
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+
+      this.logger.error(`validateUser:::ERROR: ${errMessage}`);
       if (err instanceof HttpException) throw err;
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
