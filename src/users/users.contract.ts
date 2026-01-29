@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { User } from "../models/users.model";
+import { InferAttributes } from "sequelize";
 
 export class UpdateProfileRequest {
   @ApiProperty()
@@ -21,7 +22,7 @@ export class UpdateProfileRequest {
   cardImageUrl?: string;
 }
 export class FindAllUsersResponse {
-  data: User[]
+  data: InferAttributes<User>[]
 }
 
 export class UploadResponse {
@@ -31,5 +32,5 @@ export class UploadResponse {
 }
 
 export class FindOneUserResponse {
-  data: User
+  data: InferAttributes<User>;
 }

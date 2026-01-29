@@ -1,8 +1,9 @@
-import { BelongsTo, BelongsToMany, Column, ForeignKey, HasMany, Model, PrimaryKey, Table } from "sequelize-typescript";
+import { BelongsTo, BelongsToMany, Column, DataType, ForeignKey, HasMany, Model, PrimaryKey, Table } from "sequelize-typescript";
 import { Role } from "./roles.model";
 import { Schedule } from "./schedules.model";
 import { Seat } from "./seats.model";
 import { ScheduleUser } from "./schedule_user.model";
+import type { CreationOptional, InferAttributes, InferCreationAttributes } from "sequelize";
 
 export enum USER_STATUS {
   WaitingApproval = 'wait',
@@ -13,7 +14,10 @@ export enum USER_STATUS {
   timestamps: true,
   tableName: 'users'
 })
-export class User extends Model {
+export class User extends Model<
+  InferAttributes<User>,
+  InferCreationAttributes<User>
+> {
   @PrimaryKey
   @Column
   userId: string;
@@ -33,11 +37,16 @@ export class User extends Model {
   @Column
   address: string;
 
-  @Column
-  creditScore: number;
+  @Column({
+    type: DataType.INTEGER
+  })
+  creditScore: CreationOptional<number>;
 
-  @Column
-  status: USER_STATUS;
+  @Column({
+    type: DataType.ENUM,
+    values: ['wait', 'approve', 'reject']
+  })
+  status: CreationOptional<USER_STATUS>;
 
   @Column
   cardImageUrl?: string;
@@ -47,11 +56,11 @@ export class User extends Model {
   roleId: number
 
   @BelongsTo(() => Role)
-  role: Role;
+  role: CreationOptional<Role>;
 
   @BelongsToMany(() => Schedule, () => ScheduleUser)
-  schedules: Schedule[];
+  schedules: CreationOptional<Schedule[]>;
 
   @HasMany(() => Seat)
-  seats: Seat[];
+  seats: CreationOptional<Seat[]>;
 }
