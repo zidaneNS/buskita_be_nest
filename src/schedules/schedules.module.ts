@@ -9,10 +9,14 @@ import { Route } from 'src/models/routes.model';
 import { Bus } from 'src/models/buses.model';
 import { Seat } from 'src/models/seats.model';
 import { User } from 'src/models/users.model';
+import { EventGateway } from 'src/event/event.gateway';
 
 @Module({
   controllers: [SchedulesController],
-  providers: [SchedulesService],
+  providers: [
+    SchedulesService,
+    EventGateway,
+  ],
   imports: [
     SequelizeModule.forFeature([
       Schedule,

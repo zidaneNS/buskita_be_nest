@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger, NotFoundException, Sse } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { DefaultResponse } from 'src/app.contract';
 import { Schedule } from 'src/models/schedules.model';
@@ -14,8 +14,8 @@ import { ScheduleUser } from 'src/models/schedule_user.model';
 import { nanoid } from 'nanoid';
 import { Cron, SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
-import { DateTime } from 'luxon';
 import generateCronProperties from 'src/helpers/generateCronProperties';
+import { EventGateway } from 'src/event/event.gateway';
 
 @Injectable()
 export class SchedulesService {
@@ -41,6 +41,8 @@ export class SchedulesService {
     private sequelize: Sequelize,
 
     private schedulerRegistry: SchedulerRegistry,
+
+    private eventGateway: EventGateway,
   ) { }
 
   private readonly logger = new Logger('SchedulesService');
@@ -222,8 +224,11 @@ export class SchedulesService {
       } = body;
 
       const cronProps = generateCronProperties(time);
-
+      
+      this.clearCron(scheduleId);
+      
       this.addCron(scheduleId, cronProps);
+      this.eventGateway.server.emit('schedule', 'update from schedule service');
 
       return responseTemplate(HttpStatus.OK, 'schedule updated', { data: schedule });
     } catch (err) {
@@ -291,12 +296,21 @@ export class SchedulesService {
     this.logger.log(`Add Cron Job For ${name}, ${JSON.stringify(cronTime)}`);
   }
 
-  @Cron('3 59 15 30 1 *')
+  clearCron(name: string) {
+    try {
+      const isExistCron = this.schedulerRegistry.getCronJob(name);
+
+      if (isExistCron) {
+        isExistCron.stop();
+        this.schedulerRegistry.deleteCronJob(name);
+      }
+    } catch (err) {
+
+    }
+  }
+
+  @Cron('0 0 0 * * *')
   handleCron() {
-    const date = new Date();
-    const offset = date.getTimezoneOffset();
-    const hourOffset = Math.floor(offset / 60);
-    const minuteOffset = offset - hourOffset * 60;
-    this.logger.log(`now date ${date.toISOString()} offset: ${offset}, hourOffset: ${hourOffset} minute: ${minuteOffset}`);
+    
   }
 }
