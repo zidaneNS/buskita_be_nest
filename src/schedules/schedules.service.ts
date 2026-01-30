@@ -2,17 +2,20 @@ import { BadRequestException, HttpException, HttpStatus, Injectable, InternalSer
 import { InjectModel } from '@nestjs/sequelize';
 import { DefaultResponse } from 'src/app.contract';
 import { Schedule } from 'src/models/schedules.model';
-import { CreateScheduleRequest, FindAllScheduleResponse, FindAllSeatWithScheduleStats, FindOneScheduleResponse, ScheduleWithSeatInfo, SeatWithScheduleStats } from './schedules.contract';
+import { CreateScheduleRequest, CronProperties, FindAllScheduleResponse, FindAllSeatWithScheduleStats, FindOneScheduleResponse, ScheduleWithSeatInfo, SeatWithScheduleStats } from './schedules.contract';
 import responseTemplate from 'src/helpers/responseTemplate';
 import { Bus } from 'src/models/buses.model';
 import { Route } from 'src/models/routes.model';
-import { v4 as uuid } from 'uuid';
 import { Seat } from 'src/models/seats.model';
 import { User } from 'src/models/users.model';
 import generateErrMsg from 'src/helpers/generateErrMsg';
 import { Sequelize } from 'sequelize-typescript';
 import { ScheduleUser } from 'src/models/schedule_user.model';
 import { nanoid } from 'nanoid';
+import { Cron, SchedulerRegistry } from '@nestjs/schedule';
+import { CronJob } from 'cron';
+import { DateTime } from 'luxon';
+import generateCronProperties from 'src/helpers/generateCronProperties';
 
 @Injectable()
 export class SchedulesService {
@@ -36,6 +39,8 @@ export class SchedulesService {
     private scheduleUserRepositories: typeof ScheduleUser,
 
     private sequelize: Sequelize,
+
+    private schedulerRegistry: SchedulerRegistry,
   ) { }
 
   private readonly logger = new Logger('SchedulesService');
@@ -125,7 +130,7 @@ export class SchedulesService {
       const userData = foundUser.get() as User;
       const userSeats = userData.seats.map(s => {
         const { schedule, ...restData } = s.get() as Seat;
-        const { users, seats, ...restSchedule} = schedule.get() as Schedule;
+        const { users, seats, ...restSchedule } = schedule.get() as Schedule;
 
         return {
           ...restData,
@@ -170,7 +175,7 @@ export class SchedulesService {
         routeId,
         busId,
         isClosed
-      }, {transaction});
+      }, { transaction });
 
       this.logger.log(`schedule id: ${schedule.get().scheduleId}`);
 
@@ -182,7 +187,7 @@ export class SchedulesService {
         verified: false
       }));
 
-      await this.seatRepositories.bulkCreate(seatsRecord, {transaction});
+      await this.seatRepositories.bulkCreate(seatsRecord, { transaction });
 
       await transaction.commit();
       const foundSeats = await this.seatRepositories.count({ where: { scheduleId: schedule.get().scheduleId } });
@@ -211,6 +216,14 @@ export class SchedulesService {
       if (!schedule) throw new BadRequestException(`schedule with id ${scheduleId} not found`);
 
       await schedule.update({ ...body });
+
+      const {
+        time
+      } = body;
+
+      const cronProps = generateCronProperties(time);
+
+      this.addCron(scheduleId, cronProps);
 
       return responseTemplate(HttpStatus.OK, 'schedule updated', { data: schedule });
     } catch (err) {
@@ -250,5 +263,40 @@ export class SchedulesService {
       if (err instanceof HttpException) throw err;
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  addCron(name: string, cronProps: CronProperties) {
+    const {
+      second,
+      minute,
+      hour,
+      day,
+      month
+    } = cronProps;
+
+    const cronTime = {
+      second: second ? second : '0',
+      minute: minute ? minute : '0',
+      hour: hour ? hour : '0',
+      day: day ? day : '0',
+      month: month ? month : '1',
+    };
+
+    const job = new CronJob(`${cronTime.second} ${cronTime.minute} ${cronTime.hour} ${cronTime.day} ${cronTime.month} *`, () => {
+      this.logger.log(`job from ${name} in ${JSON.stringify(cronTime)}`);
+    });
+
+    this.schedulerRegistry.addCronJob(name, job);
+    job.start();
+    this.logger.log(`Add Cron Job For ${name}, ${JSON.stringify(cronTime)}`);
+  }
+
+  @Cron('3 59 15 30 1 *')
+  handleCron() {
+    const date = new Date();
+    const offset = date.getTimezoneOffset();
+    const hourOffset = Math.floor(offset / 60);
+    const minuteOffset = offset - hourOffset * 60;
+    this.logger.log(`now date ${date.toISOString()} offset: ${offset}, hourOffset: ${hourOffset} minute: ${minuteOffset}`);
   }
 }

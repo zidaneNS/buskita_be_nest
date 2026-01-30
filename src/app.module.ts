@@ -20,6 +20,7 @@ import { RoutesModule } from './routes/routes.module';
 import { SeatsModule } from './seats/seats.module';
 import { FileController } from './file/file.controller';
 import { EventGateway } from './event/event.gateway';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { EventGateway } from './event/event.gateway';
       isGlobal: true,
       envFilePath: process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env'
     }),
+    ScheduleModule.forRoot(),
     RsaModule, 
     UsersModule,
     SequelizeModule.forRoot({

@@ -62,6 +62,14 @@ export class BaseScheduleProperty {
   bus: Bus;
 }
 
+export interface CronProperties {
+  second: number;
+  minute: number;
+  hour: number;
+  day: number;
+  month: number;
+}
+
 export const scheduleSchema = z.object({
   time: z.string().min(1),
   busId: z.string().min(1),
