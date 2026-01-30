@@ -1,18 +1,26 @@
-import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway } from '@nestjs/websockets';
-import { Socket } from 'dgram';
+import { MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { Server } from 'socket.io';
+import { MessageEventPayload } from './event.contract';
+import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
   cors: {
-    origin: '*'
+    origin: [
+      'http://localhost:5173',
+      'https://buskita.vercel.app'
+    ]
   }
 })
 export class EventGateway {
-  @SubscribeMessage('message')
-  handleMessage(@MessageBody() body: string, @ConnectedSocket() socket: Socket): string {
-    console.log(body);
-    console.log('Hello world');
-    socket.emit('message', 'test');
+  private readonly logger = new Logger('EventGateway')
+  @WebSocketServer()
+  server: Server;
 
-    return 'Hello world!';
+  @SubscribeMessage('server')
+  handleMessage(@MessageBody() body: MessageEventPayload) {
+    this.logger.log('---SERVER EVENT---');
+    this.logger.log(`serverEvent:::body: ${JSON.stringify(body)}`);
+    
+    this.server.emit(body.key, body.message);
   }
 }
