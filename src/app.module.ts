@@ -19,6 +19,7 @@ import { RoutesController } from './routes/routes.controller';
 import { RoutesModule } from './routes/routes.module';
 import { SeatsModule } from './seats/seats.module';
 import { FileController } from './file/file.controller';
+import { EventGateway } from './event/event.gateway';
 
 @Module({
   imports: [
@@ -57,6 +58,6 @@ import { FileController } from './file/file.controller';
     SeatsModule,
   ],
   controllers: [AppController, FileController],
-  providers: [AppService]
+  providers: [AppService, EventGateway]
 })
 export class AppModule {}
