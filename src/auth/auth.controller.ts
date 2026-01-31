@@ -1,8 +1,9 @@
-import { Body, Controller, HttpException, HttpStatus, Logger, Post } from '@nestjs/common';
+import { Body, Controller, HttpException, HttpStatus, Logger, Param, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInRequest, SignInResponse, SignUpRequest, SignUpResponse } from './auth.contract';
 import { DefaultResponse } from 'src/app.contract';
 import generateErrMsg from 'src/helpers/generateErrMsg';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('auth')
 export class AuthController {
@@ -36,6 +37,24 @@ export class AuthController {
     } catch (err) {
       const errMessage = generateErrMsg(err);
       this.logger.error(`signup:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @UseInterceptors(FileInterceptor('cardImage'))
+  @Post('upload/:userId')
+  async uploadCardImageRegister(@UploadedFile() cardImage: Express.Multer.File, @Param('userId') userId: string): Promise<DefaultResponse<{data: string}>> {
+    try {
+      this.logger.log('---UPLOAD CARD IMAGE REGISTER---');
+      this.logger.log(`uploadCardImageResgister:::cardImage: ${JSON.stringify(cardImage)}`);
+      this.logger.log(`uploadCardImageRegister:::userId: ${userId}`);
+
+      return this.authService.uploadCardImageRegister(cardImage.buffer, userId);
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`uploadCardImage:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);

@@ -7,6 +7,7 @@ import bcrypt from 'bcrypt';
 import responseTemplate from 'src/helpers/responseTemplate';
 import { JwtService } from '@nestjs/jwt';
 import generateErrMsg from 'src/helpers/generateErrMsg';
+import { put } from '@vercel/blob';
 
 @Injectable()
 export class AuthService {
@@ -15,7 +16,7 @@ export class AuthService {
     private userRepositories: typeof User,
 
     private jwtService: JwtService
-  ) {}
+  ) { }
 
   private readonly logger = new Logger('AuthService');
 
@@ -24,17 +25,17 @@ export class AuthService {
       this.logger.log('---SIGNIN---');
 
       const { userId, password } = body;
-  
-      const findUser = await this.userRepositories.findOne({ where: {userId} })
-  
+
+      const findUser = await this.userRepositories.findOne({ where: { userId } })
+
       if (!findUser) throw new NotFoundException('User Not Found');
-  
+
       const { password: findPassword, ...data } = findUser.get();
-  
+
       const matched = await bcrypt.compare(password, findPassword);
-  
+
       if (!matched) throw new UnauthorizedException('Wrong Credentials');
-  
+
       return responseTemplate(HttpStatus.CREATED, 'login succeed', {
         data: await this.jwtService.signAsync(data)
       });
@@ -78,7 +79,7 @@ export class AuthService {
         cardImageUrl
       }
 
-      const isExist = await this.userRepositories.findOne({ where: { userId }});
+      const isExist = await this.userRepositories.findOne({ where: { userId } });
 
       if (isExist) throw new ConflictException(`user with id ${userId} is existed`);
 
@@ -93,6 +94,29 @@ export class AuthService {
     } catch (err) {
       const errMessage = generateErrMsg(err);
       this.logger.error(`signup:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async uploadCardImageRegister(fileBuffer: Buffer, userId: string): Promise<DefaultResponse<{ data: string }>> {
+    try {
+      this.logger.log('---UPLOAD CARD IMAGE REGISTER---');
+      this.logger.log(`uploadCardImageResgiter:::userId: ${userId}`);
+
+      const foundUser = await this.userRepositories.findByPk(userId);
+      if (foundUser) throw new ConflictException('User With This Id Is Exist');
+
+      const blob = await put(userId, fileBuffer, {
+        access: 'public',
+        allowOverwrite: true,
+      });
+
+      return responseTemplate(HttpStatus.OK, 'Image Uploaded', { data: blob.url });
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`uploadCardImageRegister:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);

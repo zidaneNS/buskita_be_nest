@@ -21,6 +21,8 @@ export class EventGateway {
     this.logger.log('---SERVER EVENT---');
     this.logger.log(`serverEvent:::body: ${JSON.stringify(body)}`);
     
-    this.server.emit(body.key, body.message);
+    this.server.emit(body.key, {
+      ...body
+    });
   }
 }

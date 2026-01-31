@@ -16,6 +16,7 @@ import { Cron, SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import generateCronProperties from 'src/helpers/generateCronProperties';
 import { EventGateway } from 'src/event/event.gateway';
+import generateEventPayload from 'src/helpers/generateEventPayload';
 
 @Injectable()
 export class SchedulesService {
@@ -222,15 +223,6 @@ export class SchedulesService {
         time: new Date(body.time),
       });
 
-      const {
-        time
-      } = body;
-
-      const cronProps = generateCronProperties(time);
-
-      this.clearCron(scheduleId);
-
-      this.addCron(scheduleId, cronProps);
       this.eventGateway.server.emit('schedule', 'update from schedule service');
 
       return responseTemplate(HttpStatus.OK, 'schedule updated', { data: schedule });
@@ -273,42 +265,52 @@ export class SchedulesService {
     }
   }
 
-  addCron(name: string, cronProps: CronProperties) {
-    const {
-      second,
-      minute,
-      hour,
-      day,
-      month
-    } = cronProps;
-
-    const cronTime = {
-      second: second ? second : '0',
-      minute: minute ? minute : '0',
-      hour: hour ? hour : '0',
-      day: day ? day : '0',
-      month: month ? month : '1',
-    };
-
-    const job = new CronJob(`${cronTime.second} ${cronTime.minute} ${cronTime.hour} ${cronTime.day} ${cronTime.month} *`, () => {
-      this.logger.log(`job from ${name} in ${JSON.stringify(cronTime)}`);
-    });
-
-    this.schedulerRegistry.addCronJob(name, job);
-    job.start();
-    this.logger.log(`Add Cron Job For ${name}, ${JSON.stringify(cronTime)}`);
-  }
-
-  clearCron(name: string) {
+  async confirmSchedule(scheduleId: string): Promise<DefaultResponse<FindOneScheduleResponse>> {
     try {
-      const isExistCron = this.schedulerRegistry.getCronJob(name);
+      this.logger.log('---CONFIRM SCHEDULE---');
+      this.logger.log(`confirmSchedule:::scheduleId: ${scheduleId}`);
 
-      if (isExistCron) {
-        isExistCron.stop();
-        this.schedulerRegistry.deleteCronJob(name);
+      const foundSchedule = await this.scheduleRepositories.findByPk(scheduleId, {
+        include: [
+          {
+            model: Seat,
+            include: [
+              User,
+            ]
+          }
+        ]
+      });
+      if (!foundSchedule) throw new NotFoundException('Schedule Not Found');
+
+      const schedule = foundSchedule.get();
+      const relatedSeats = schedule.seats.map(item => item.get());
+
+      for (const seat of relatedSeats) {
+        if (seat.userId && !seat.verified) {
+          const foundUser = seat.user;
+          const user = foundUser.get();
+          foundUser.update({
+            creditScore: user.creditScore - 3,
+          });
+          this.eventGateway.server.emit('auth', generateEventPayload({
+            key: 'auth',
+            message: 'Tiket Anda Tidak Terverifikasi',
+            userId: user.userId
+          }));
+        }
       }
-    } catch (err) {
 
+      await foundSchedule.update({
+        isCompleted: true,
+      });
+
+      return responseTemplate(HttpStatus.OK, 'Schedule Finished', { data: foundSchedule });
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`confirmSchedule:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

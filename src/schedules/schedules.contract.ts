@@ -1,4 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { InferAttributes } from "sequelize";
 import { Bus } from "src/models/buses.model";
 import { Schedule } from "src/models/schedules.model";
 import { Seat } from "src/models/seats.model";
@@ -33,8 +34,8 @@ export class ScheduleWithSeatInfo extends Schedule {
   totalSeats: number;
 }
 
-export class SeatWithScheduleStats extends Seat {
-  declare schedule: ScheduleWithSeatInfo;
+export interface SeatWithScheduleStats extends Omit<Seat, 'schedule'>  {
+  schedule: ScheduleWithSeatInfo;
 }
 
 export class FindAllSeatWithScheduleStats {

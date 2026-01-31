@@ -129,7 +129,7 @@ export class SeatsService {
       const scheduleId = seat.scheduleId;
 
       foundSeat.update(
-        { userId: null },
+        { userId: undefined },
         { transaction }
       );
 
@@ -172,7 +172,7 @@ export class SeatsService {
       if (!userId) throw new BadRequestException('seat is not belongs to you');
 
       await foundCurrSeat.update(
-        { userId: null },
+        { userId: undefined },
         { transaction }
       );
 

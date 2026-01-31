@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, Logger, Param, Post, Put, Req, UnauthorizedException, UseGuards, UsePipes } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Logger, Param, Patch, Post, Put, Req, UnauthorizedException, UseGuards, UsePipes } from '@nestjs/common';
 import { SchedulesService } from './schedules.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from 'src/auth/auth.guard';
@@ -95,6 +95,25 @@ export class SchedulesController {
     } catch (err) {
       const errMessage = generateErrMsg(err);
       this.logger.error(`create:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(ROLE.SuperAdmin, ROLE.Admin)
+  @Patch('confirm/:scheduleId')
+  async confirmSchedule(@Param('scheduleId') scheduleId: string): Promise<DefaultResponse<FindOneScheduleResponse>> {
+    try {
+      this.logger.log('---CONFIRM SCHEDULE---');
+      this.logger.log(`confirmSchedule:::scheduleId: ${scheduleId}`);
+
+      return this.schedulesService.confirmSchedule(scheduleId);
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`confirmSchedule:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
