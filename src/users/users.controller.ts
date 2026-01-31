@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Logger, Param, Patch, Put, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, HttpStatus, Logger, Param, Patch, Post, Put, Req, UnauthorizedException, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { DefaultResponse } from 'src/app.contract';
 import { FindAllUsersResponse, FindOneUserResponse, UpdateProfileRequest, ValidateUserRequest } from './users.contract';
@@ -11,6 +11,8 @@ import generateErrMsg from 'src/helpers/generateErrMsg';
 import type { Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { User } from 'src/models/users.model';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { put } from '@vercel/blob';
 
 @Controller('users')
 export class UsersController {
@@ -37,26 +39,46 @@ export class UsersController {
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-  
+
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   @Get('info')
   async getInfo(@Req() req: Request): Promise<DefaultResponse<FindOneUserResponse>> {
     try {
       this.logger.log('---GET INFO---');
-      
+
       const [_, token] = req.headers.authorization?.split(' ') ?? [];
-      
+
       if (!token) throw new UnauthorizedException();
-      
+
       const { iat, exp, ...decoded } = this.jwtService.decode(token);
       const user = decoded as User;
-      
+
       return this.usersService.findOne(user.userId);
     } catch (err) {
       const errMessage = generateErrMsg(err);
       this.logger.error(`getInfo:::ERROR: ${errMessage}`);
-      
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Post('upload/:userId')
+  @UseInterceptors(FileInterceptor('cardImage'))
+  async uploadCardImage(@UploadedFile() cardImage: Express.Multer.File, @Param('userId') userId: string): Promise<DefaultResponse<FindOneUserResponse>> {
+    try {
+      this.logger.log('---UPLOAD CARD IMAGE---');
+      this.logger.log(`uploadCardImage:::cardImage: ${JSON.stringify(cardImage)}`);
+      this.logger.log(`uploadCardImage:::userId: ${userId}`);
+
+      return this.usersService.uploadCardImage(cardImage.buffer, userId);
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`uploadCardImage:::ERROR: ${errMessage}`);
+
       if (err instanceof HttpException) throw err;
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -68,7 +90,7 @@ export class UsersController {
   async updateProfile(@Param('userId') userId: string, @Body() body: UpdateProfileRequest): Promise<DefaultResponse<FindOneUserResponse>> {
     try {
       this.logger.log('---UPDATE PROFILE---');
-      this.logger.log( `updateProfile:::userId: ${userId}`);
+      this.logger.log(`updateProfile:::userId: ${userId}`);
       this.logger.log(`updateProfile:::body: ${JSON.stringify(body)}`);
 
       return this.usersService.updateProfile(userId, body);
@@ -101,7 +123,7 @@ export class UsersController {
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-  
+
   @ApiBearerAuth()
   @UseGuards(AuthGuard, UsersGuard)
   @Get(':userId')

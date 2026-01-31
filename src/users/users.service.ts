@@ -9,6 +9,7 @@ import generateErrMsg from 'src/helpers/generateErrMsg';
 import { unlink } from 'node:fs/promises';
 import { InferAttributes } from 'sequelize';
 import { existsSync } from 'node:fs';
+import { put } from '@vercel/blob';
 
 @Injectable()
 export class UsersService {
@@ -32,7 +33,6 @@ export class UsersService {
         this.logger.log(JSON.stringify(user));
         return {
           ...user,
-          cardImageUrl: user.cardImageUrl ? `${process.env.APP_URL}/file/${user.cardImageUrl}` : '',
         }
       });
 
@@ -67,7 +67,6 @@ export class UsersService {
 
       const data: InferAttributes<User> = {
         ...user,
-        cardImageUrl: user.cardImageUrl ? `${process.env.APP_URL}/file/${user.cardImageUrl}` : ''
       }
 
       if (findUser) return responseTemplate(HttpStatus.OK, 'find one user', {
@@ -153,6 +152,36 @@ export class UsersService {
     } catch (err) {
       const errMessage = generateErrMsg(err);
       this.logger.error(`validateUser:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async uploadCardImage(fileBuffer: Buffer, userId: string): Promise<DefaultResponse<FindOneUserResponse>> {
+    try {
+      this.logger.log('---UPLOAD CARD IMAGE---');
+      this.logger.log(`uploadCardImage:::userId: ${userId}`);
+
+      const foundUser = await this.userRepositories.findByPk(userId);
+      if (!foundUser) throw new NotFoundException('User Not Found');
+
+      const user = foundUser.get();
+
+      const blob = await put(userId, fileBuffer, {
+        access: 'public',
+        allowOverwrite: true,
+      });
+
+      foundUser.update({
+        ...user,
+        cardImageUrl: blob.url
+      });
+
+      return responseTemplate(HttpStatus.OK, 'Image File Uploaded', { data: foundUser });
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`uploadCardImage:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);

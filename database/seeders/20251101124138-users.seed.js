@@ -33,7 +33,7 @@ module.exports = {
       phoneNumber: '08123456712',
       address: 'indonesia',
       roleId: 3,
-      status: 'approve',
+      status: 'wait',
     },
    ])
   },

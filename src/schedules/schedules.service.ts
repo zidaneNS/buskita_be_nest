@@ -173,7 +173,7 @@ export class SchedulesService {
 
       const schedule = await this.scheduleRepositories.create({
         scheduleId,
-        time,
+        time: new Date(time),
         routeId,
         busId,
         isClosed
@@ -217,16 +217,19 @@ export class SchedulesService {
       const schedule = await this.scheduleRepositories.findByPk(scheduleId);
       if (!schedule) throw new BadRequestException(`schedule with id ${scheduleId} not found`);
 
-      await schedule.update({ ...body });
+      await schedule.update({
+        ...body,
+        time: new Date(body.time),
+      });
 
       const {
         time
       } = body;
 
       const cronProps = generateCronProperties(time);
-      
+
       this.clearCron(scheduleId);
-      
+
       this.addCron(scheduleId, cronProps);
       this.eventGateway.server.emit('schedule', 'update from schedule service');
 
@@ -311,6 +314,6 @@ export class SchedulesService {
 
   @Cron('0 0 0 * * *')
   handleCron() {
-    
+
   }
 }
