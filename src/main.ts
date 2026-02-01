@@ -9,7 +9,8 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000', 
       'https://buskita.vercel.app',
-      'http://localhost:5173'
+      'http://localhost:5173',
+      'http://192.168.0.149:5173'
     ]
   });
   

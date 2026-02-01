@@ -10,12 +10,17 @@ import { unlink } from 'node:fs/promises';
 import { InferAttributes } from 'sequelize';
 import { existsSync } from 'node:fs';
 import { put } from '@vercel/blob';
+import { Cron } from '@nestjs/schedule';
+import { EventGateway } from 'src/event/event.gateway';
+import generateEventPayload from 'src/helpers/generateEventPayload';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User)
-    private userRepositories: typeof User
+    private userRepositories: typeof User,
+
+    private eventGateway: EventGateway,
   ) { }
   private readonly logger = new Logger('UsersService');
 
@@ -148,6 +153,12 @@ export class UsersService {
         status: isValid ? USER_STATUS.Approve : USER_STATUS.Reject
       });
 
+      this.eventGateway.server.emit('auth', generateEventPayload({
+        key: 'auth',
+        message: 'Validasi DiUpdate',
+        userId
+      }));
+
       return responseTemplate(HttpStatus.OK, 'User Status Updated', { data: foundUser });
     } catch (err) {
       const errMessage = generateErrMsg(err);
@@ -185,6 +196,30 @@ export class UsersService {
 
       if (err instanceof HttpException) throw err;
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Cron('0 0 0 * * *')
+  async increasePoint() {
+    try {
+      this.logger.log('---INCREASE POINT---');
+      const foundUsers = await this.userRepositories.findAll();
+      for (const foundUser of foundUsers) {
+        const user = foundUser.get();
+        if (user.creditScore < 15) {
+          await foundUser.update({
+            creditScore: user.creditScore + 1,
+          });
+          this.eventGateway.server.emit('auth', generateEventPayload({
+            key: 'auth',
+            message: 'Point Ditambah',
+            userId: user.userId
+          }));
+        }
+      }
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`increasePoint:::ERROR: ${errMessage}`);
     }
   }
 }

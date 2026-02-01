@@ -34,8 +34,8 @@ export class ScheduleWithSeatInfo extends Schedule {
   totalSeats: number;
 }
 
-export interface SeatWithScheduleStats extends Omit<Seat, 'schedule'>  {
-  schedule: ScheduleWithSeatInfo;
+export class SeatWithScheduleStats extends Seat {
+  declare schedule: ScheduleWithSeatInfo;
 }
 
 export class FindAllSeatWithScheduleStats {

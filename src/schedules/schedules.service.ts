@@ -1,8 +1,8 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger, NotFoundException, Sse } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { DefaultResponse } from 'src/app.contract';
 import { Schedule } from 'src/models/schedules.model';
-import { CreateScheduleRequest, CronProperties, FindAllScheduleResponse, FindAllSeatWithScheduleStats, FindOneScheduleResponse, ScheduleWithSeatInfo, SeatWithScheduleStats } from './schedules.contract';
+import { CreateScheduleRequest, FindAllScheduleResponse, FindAllSeatWithScheduleStats, FindOneScheduleResponse, ScheduleWithSeatInfo, SeatWithScheduleStats } from './schedules.contract';
 import responseTemplate from 'src/helpers/responseTemplate';
 import { Bus } from 'src/models/buses.model';
 import { Route } from 'src/models/routes.model';
@@ -12,9 +12,7 @@ import generateErrMsg from 'src/helpers/generateErrMsg';
 import { Sequelize } from 'sequelize-typescript';
 import { ScheduleUser } from 'src/models/schedule_user.model';
 import { nanoid } from 'nanoid';
-import { Cron, SchedulerRegistry } from '@nestjs/schedule';
-import { CronJob } from 'cron';
-import generateCronProperties from 'src/helpers/generateCronProperties';
+import { SchedulerRegistry } from '@nestjs/schedule';
 import { EventGateway } from 'src/event/event.gateway';
 import generateEventPayload from 'src/helpers/generateEventPayload';
 
@@ -130,10 +128,10 @@ export class SchedulesService {
       });
       if (!foundUser) throw new NotFoundException('user not found');
 
-      const userData = foundUser.get() as User;
+      const userData = foundUser.get();
       const userSeats = userData.seats.map(s => {
-        const { schedule, ...restData } = s.get() as Seat;
-        const { users, seats, ...restSchedule } = schedule.get() as Schedule;
+        const { schedule, ...restData } = s.get();
+        const { users, seats, ...restSchedule } = schedule.get();
 
         return {
           ...restData,
@@ -197,6 +195,10 @@ export class SchedulesService {
 
       if (totalSeats !== foundSeats) throw new InternalServerErrorException('seats not fully generated');
 
+      this.eventGateway.server.emit('schedule', generateEventPayload({
+        key: 'schedule',
+        message: 'Jadwal Bertambah',
+      }));
 
       return responseTemplate(HttpStatus.CREATED, 'schedule created', { data: schedule });
     } catch (err) {
@@ -253,6 +255,15 @@ export class SchedulesService {
       await foundSchedule.destroy({ transaction });
 
       await transaction.commit();
+
+      this.eventGateway.server.emit('schedule', generateEventPayload({
+        key: 'schedule',
+        message: 'Jadwal Dihapus',
+      }));
+      this.eventGateway.server.emit('schedule.management', generateEventPayload({
+        key: 'schedule.management',
+        message: 'Jadwal Dihapus',
+      }))
 
       return responseTemplate(HttpStatus.NO_CONTENT, 'schedule successfully deleted');
     } catch (err) {
@@ -312,10 +323,5 @@ export class SchedulesService {
       if (err instanceof HttpException) throw err;
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-
-  @Cron('0 0 0 * * *')
-  handleCron() {
-
   }
 }

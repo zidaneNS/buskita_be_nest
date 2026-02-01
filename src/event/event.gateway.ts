@@ -7,7 +7,8 @@ import { Logger } from '@nestjs/common';
   cors: {
     origin: [
       'http://localhost:5173',
-      'https://buskita.vercel.app'
+      'https://buskita.vercel.app',
+      'http://192.168.0.149:5173'
     ]
   }
 })

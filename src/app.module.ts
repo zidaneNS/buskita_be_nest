@@ -17,7 +17,6 @@ import { BusesModule } from './buses/buses.module';
 import { SchedulesModule } from './schedules/schedules.module';
 import { RoutesModule } from './routes/routes.module';
 import { SeatsModule } from './seats/seats.module';
-import { FileController } from './file/file.controller';
 import { EventGateway } from './event/event.gateway';
 import { ScheduleModule } from '@nestjs/schedule';
 
@@ -58,7 +57,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     RoutesModule,
     SeatsModule,
   ],
-  controllers: [AppController, FileController],
+  controllers: [AppController],
   providers: [AppService, EventGateway]
 })
 export class AppModule {}

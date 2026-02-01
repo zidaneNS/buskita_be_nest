@@ -2,16 +2,12 @@ import { BelongsTo, Column, Default, ForeignKey, Model, PrimaryKey, Table } from
 import { Bus } from "./buses.model";
 import { User } from "./users.model";
 import { Schedule } from "./schedules.model";
-import type { CreationOptional, InferAttributes, InferCreationAttributes } from "sequelize";
 
 @Table({
   tableName: 'seats',
   timestamps: true
 })
-export class Seat extends Model<
-  InferAttributes<Seat>,
-  InferCreationAttributes<Seat>
-> {
+export class Seat extends Model {
   @PrimaryKey
   @Column
   seatId: string;
@@ -35,11 +31,11 @@ export class Seat extends Model<
   verified: boolean;
 
   @BelongsTo(() => Bus)
-  bus: CreationOptional<Bus>;
+  bus: Bus;
 
   @BelongsTo(() => User)
-  user: CreationOptional<User>;
+  user: User;
 
   @BelongsTo(() => Schedule)
-  schedule: CreationOptional<Schedule>;
+  schedule: Schedule;
 }
