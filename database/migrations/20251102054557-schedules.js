@@ -25,17 +25,22 @@ module.exports = {
       isClosed: {
         type: Sequelize.DataTypes.BOOLEAN,
         allowNull: false,
-        defaultValue: false
+        defaultValue: false,
+      },
+      isCompleted: {
+        type: Sequelize.DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
       },
       createdAt: {
         type: Sequelize.DataTypes.DATE,
         allowNull: false,
-        defaultValue: Date.now()
+        defaultValue: Date.now(),
       },
       updatedAt: {
         type: Sequelize.DataTypes.DATE,
         allowNull: false,
-        defaultValue: Date.now()
+        defaultValue: Date.now(),
       },
     });
 

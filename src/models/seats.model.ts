@@ -37,5 +37,5 @@ export class Seat extends Model {
   user: User;
 
   @BelongsTo(() => Schedule)
-  schedule: Schedule
+  schedule: Schedule;
 }

@@ -1,4 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { InferAttributes } from "sequelize";
 import { Bus } from "src/models/buses.model";
 import { Schedule } from "src/models/schedules.model";
 import { Seat } from "src/models/seats.model";
@@ -60,6 +61,14 @@ export class BaseScheduleProperty {
 
   @ApiProperty()
   bus: Bus;
+}
+
+export interface CronProperties {
+  second: number;
+  minute: number;
+  hour: number;
+  day: number;
+  month: number;
 }
 
 export const scheduleSchema = z.object({

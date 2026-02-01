@@ -15,10 +15,10 @@ import { ScheduleUser } from './models/schedule_user.model';
 import { Seat } from './models/seats.model';
 import { BusesModule } from './buses/buses.module';
 import { SchedulesModule } from './schedules/schedules.module';
-import { RoutesController } from './routes/routes.controller';
 import { RoutesModule } from './routes/routes.module';
 import { SeatsModule } from './seats/seats.module';
-import { FileController } from './file/file.controller';
+import { EventGateway } from './event/event.gateway';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -26,6 +26,7 @@ import { FileController } from './file/file.controller';
       isGlobal: true,
       envFilePath: process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env'
     }),
+    ScheduleModule.forRoot(),
     RsaModule, 
     UsersModule,
     SequelizeModule.forRoot({
@@ -56,7 +57,7 @@ import { FileController } from './file/file.controller';
     RoutesModule,
     SeatsModule,
   ],
-  controllers: [AppController, FileController],
-  providers: [AppService]
+  controllers: [AppController],
+  providers: [AppService, EventGateway]
 })
 export class AppModule {}

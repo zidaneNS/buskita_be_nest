@@ -9,12 +9,18 @@ import generateErrMsg from 'src/helpers/generateErrMsg';
 import { unlink } from 'node:fs/promises';
 import { InferAttributes } from 'sequelize';
 import { existsSync } from 'node:fs';
+import { put } from '@vercel/blob';
+import { Cron } from '@nestjs/schedule';
+import { EventGateway } from 'src/event/event.gateway';
+import generateEventPayload from 'src/helpers/generateEventPayload';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User)
-    private userRepositories: typeof User
+    private userRepositories: typeof User,
+
+    private eventGateway: EventGateway,
   ) { }
   private readonly logger = new Logger('UsersService');
 
@@ -32,7 +38,6 @@ export class UsersService {
         this.logger.log(JSON.stringify(user));
         return {
           ...user,
-          cardImageUrl: user.cardImageUrl ? `${process.env.APP_URL}/file/${user.cardImageUrl}` : '',
         }
       });
 
@@ -67,7 +72,6 @@ export class UsersService {
 
       const data: InferAttributes<User> = {
         ...user,
-        cardImageUrl: user.cardImageUrl ? `${process.env.APP_URL}/file/${user.cardImageUrl}` : ''
       }
 
       if (findUser) return responseTemplate(HttpStatus.OK, 'find one user', {
@@ -149,6 +153,12 @@ export class UsersService {
         status: isValid ? USER_STATUS.Approve : USER_STATUS.Reject
       });
 
+      this.eventGateway.server.emit('auth', generateEventPayload({
+        key: 'auth',
+        message: 'Validasi DiUpdate',
+        userId
+      }));
+
       return responseTemplate(HttpStatus.OK, 'User Status Updated', { data: foundUser });
     } catch (err) {
       const errMessage = generateErrMsg(err);
@@ -156,6 +166,60 @@ export class UsersService {
 
       if (err instanceof HttpException) throw err;
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async uploadCardImage(fileBuffer: Buffer, userId: string): Promise<DefaultResponse<FindOneUserResponse>> {
+    try {
+      this.logger.log('---UPLOAD CARD IMAGE---');
+      this.logger.log(`uploadCardImage:::userId: ${userId}`);
+
+      const foundUser = await this.userRepositories.findByPk(userId);
+      if (!foundUser) throw new NotFoundException('User Not Found');
+
+      const user = foundUser.get();
+
+      const blob = await put(userId, fileBuffer, {
+        access: 'public',
+        allowOverwrite: true,
+      });
+
+      foundUser.update({
+        ...user,
+        cardImageUrl: blob.url
+      });
+
+      return responseTemplate(HttpStatus.OK, 'Image File Uploaded', { data: foundUser });
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`uploadCardImage:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Cron('0 0 0 * * *')
+  async increasePoint() {
+    try {
+      this.logger.log('---INCREASE POINT---');
+      const foundUsers = await this.userRepositories.findAll();
+      for (const foundUser of foundUsers) {
+        const user = foundUser.get();
+        if (user.creditScore < 15) {
+          await foundUser.update({
+            creditScore: user.creditScore + 1,
+          });
+          this.eventGateway.server.emit('auth', generateEventPayload({
+            key: 'auth',
+            message: 'Point Ditambah',
+            userId: user.userId
+          }));
+        }
+      }
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`increasePoint:::ERROR: ${errMessage}`);
     }
   }
 }

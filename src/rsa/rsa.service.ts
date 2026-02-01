@@ -6,9 +6,14 @@ import { DecryptRequest, EncryptRequest, GenerateEValueRequest, GenerateEValueRe
 import { DefaultResponse } from 'src/app.contract';
 import modPow from 'src/helpers/modPow';
 import generateErrMsg from 'src/helpers/generateErrMsg';
+import { EventGateway } from 'src/event/event.gateway';
+import generateEventPayload from 'src/helpers/generateEventPayload';
 
 @Injectable()
 export class RsaService {
+  constructor(
+    private eventGateway: EventGateway,
+  ) {}
   private readonly logger = new Logger('RsaService');
 
   private privateKey: PrivateKey;
@@ -107,6 +112,11 @@ export class RsaService {
 
       this.setPrivateKey(privateKey);
       this.setPublicKey(publicKey);
+
+      this.eventGateway.server.emit('key', generateEventPayload({
+        key: 'key',
+        message: 'Kunci Dibangkitkan'
+      }))
 
       return responseTemplate<GenerateKeyResponse>(HttpStatus.CREATED, 'private key and public key successfully created', {
         privateKey,

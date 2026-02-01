@@ -6,13 +6,15 @@ import { CreateScheduleRequest, FindAllScheduleResponse, FindAllSeatWithSchedule
 import responseTemplate from 'src/helpers/responseTemplate';
 import { Bus } from 'src/models/buses.model';
 import { Route } from 'src/models/routes.model';
-import { v4 as uuid } from 'uuid';
 import { Seat } from 'src/models/seats.model';
 import { User } from 'src/models/users.model';
 import generateErrMsg from 'src/helpers/generateErrMsg';
 import { Sequelize } from 'sequelize-typescript';
 import { ScheduleUser } from 'src/models/schedule_user.model';
 import { nanoid } from 'nanoid';
+import { SchedulerRegistry } from '@nestjs/schedule';
+import { EventGateway } from 'src/event/event.gateway';
+import generateEventPayload from 'src/helpers/generateEventPayload';
 
 @Injectable()
 export class SchedulesService {
@@ -36,6 +38,10 @@ export class SchedulesService {
     private scheduleUserRepositories: typeof ScheduleUser,
 
     private sequelize: Sequelize,
+
+    private schedulerRegistry: SchedulerRegistry,
+
+    private eventGateway: EventGateway,
   ) { }
 
   private readonly logger = new Logger('SchedulesService');
@@ -122,10 +128,10 @@ export class SchedulesService {
       });
       if (!foundUser) throw new NotFoundException('user not found');
 
-      const userData = foundUser.get() as User;
+      const userData = foundUser.get();
       const userSeats = userData.seats.map(s => {
-        const { schedule, ...restData } = s.get() as Seat;
-        const { users, seats, ...restSchedule} = schedule.get() as Schedule;
+        const { schedule, ...restData } = s.get();
+        const { users, seats, ...restSchedule } = schedule.get();
 
         return {
           ...restData,
@@ -166,11 +172,11 @@ export class SchedulesService {
 
       const schedule = await this.scheduleRepositories.create({
         scheduleId,
-        time,
+        time: new Date(time),
         routeId,
         busId,
         isClosed
-      }, {transaction});
+      }, { transaction });
 
       this.logger.log(`schedule id: ${schedule.get().scheduleId}`);
 
@@ -182,13 +188,17 @@ export class SchedulesService {
         verified: false
       }));
 
-      await this.seatRepositories.bulkCreate(seatsRecord, {transaction});
+      await this.seatRepositories.bulkCreate(seatsRecord, { transaction });
 
       await transaction.commit();
       const foundSeats = await this.seatRepositories.count({ where: { scheduleId: schedule.get().scheduleId } });
 
       if (totalSeats !== foundSeats) throw new InternalServerErrorException('seats not fully generated');
 
+      this.eventGateway.server.emit('schedule', generateEventPayload({
+        key: 'schedule',
+        message: 'Jadwal Bertambah',
+      }));
 
       return responseTemplate(HttpStatus.CREATED, 'schedule created', { data: schedule });
     } catch (err) {
@@ -210,7 +220,12 @@ export class SchedulesService {
       const schedule = await this.scheduleRepositories.findByPk(scheduleId);
       if (!schedule) throw new BadRequestException(`schedule with id ${scheduleId} not found`);
 
-      await schedule.update({ ...body });
+      await schedule.update({
+        ...body,
+        time: new Date(body.time),
+      });
+
+      this.eventGateway.server.emit('schedule', 'update from schedule service');
 
       return responseTemplate(HttpStatus.OK, 'schedule updated', { data: schedule });
     } catch (err) {
@@ -241,11 +256,69 @@ export class SchedulesService {
 
       await transaction.commit();
 
+      this.eventGateway.server.emit('schedule', generateEventPayload({
+        key: 'schedule',
+        message: 'Jadwal Dihapus',
+      }));
+      this.eventGateway.server.emit('schedule.management', generateEventPayload({
+        key: 'schedule.management',
+        message: 'Jadwal Dihapus',
+      }))
+
       return responseTemplate(HttpStatus.NO_CONTENT, 'schedule successfully deleted');
     } catch (err) {
       await transaction.rollback();
       const errMessage = generateErrMsg(err);
       this.logger.error(`delete:::ERROR: ${errMessage}`);
+
+      if (err instanceof HttpException) throw err;
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async confirmSchedule(scheduleId: string): Promise<DefaultResponse<FindOneScheduleResponse>> {
+    try {
+      this.logger.log('---CONFIRM SCHEDULE---');
+      this.logger.log(`confirmSchedule:::scheduleId: ${scheduleId}`);
+
+      const foundSchedule = await this.scheduleRepositories.findByPk(scheduleId, {
+        include: [
+          {
+            model: Seat,
+            include: [
+              User,
+            ]
+          }
+        ]
+      });
+      if (!foundSchedule) throw new NotFoundException('Schedule Not Found');
+
+      const schedule = foundSchedule.get();
+      const relatedSeats = schedule.seats.map(item => item.get());
+
+      for (const seat of relatedSeats) {
+        if (seat.userId && !seat.verified) {
+          const foundUser = seat.user;
+          const user = foundUser.get();
+          foundUser.update({
+            creditScore: user.creditScore - 3,
+          });
+          this.eventGateway.server.emit('auth', generateEventPayload({
+            key: 'auth',
+            message: 'Tiket Anda Tidak Terverifikasi',
+            userId: user.userId
+          }));
+        }
+      }
+
+      await foundSchedule.update({
+        isCompleted: true,
+      });
+
+      return responseTemplate(HttpStatus.OK, 'Schedule Finished', { data: foundSchedule });
+    } catch (err) {
+      const errMessage = generateErrMsg(err);
+      this.logger.error(`confirmSchedule:::ERROR: ${errMessage}`);
 
       if (err instanceof HttpException) throw err;
       throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);

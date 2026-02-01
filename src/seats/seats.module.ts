@@ -7,10 +7,14 @@ import { User } from 'src/models/users.model';
 import { Role } from 'src/models/roles.model';
 import { Schedule } from 'src/models/schedules.model';
 import { ScheduleUser } from 'src/models/schedule_user.model';
+import { EventGateway } from 'src/event/event.gateway';
 
 @Module({
   controllers: [SeatsController],
-  providers: [SeatsService],
+  providers: [
+    SeatsService,
+    EventGateway,
+  ],
   imports: [
     SequelizeModule.forFeature([
       Seat,

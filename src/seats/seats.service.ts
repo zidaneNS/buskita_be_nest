@@ -9,6 +9,8 @@ import { Schedule } from 'src/models/schedules.model';
 import responseTemplate from 'src/helpers/responseTemplate';
 import { Sequelize } from 'sequelize-typescript';
 import { ScheduleUser } from 'src/models/schedule_user.model';
+import { EventGateway } from 'src/event/event.gateway';
+import generateEventPayload from 'src/helpers/generateEventPayload';
 
 @Injectable()
 export class SeatsService {
@@ -26,6 +28,8 @@ export class SeatsService {
     private scheduleUserRepositories: typeof ScheduleUser,
 
     private readonly sequelize: Sequelize,
+
+    private eventGateway: EventGateway,
   ) { }
 
   private readonly logger = new Logger('SeatService');
@@ -94,6 +98,11 @@ export class SeatsService {
         { transaction }
       );
 
+      this.eventGateway.server.emit('schedule.management', generateEventPayload({
+        key: 'schedule.management',
+        message: 'Kursi Terisi'
+      }));
+
       await this.scheduleUserRepositories.findOrCreate({
         where: {
           scheduleId: seatData.scheduleId,
@@ -103,6 +112,11 @@ export class SeatsService {
       });
 
       await transaction.commit();
+
+      this.eventGateway.server.emit('schedule.management', generateEventPayload({
+        key: 'schedule.management',
+        message: 'Kursi Terisi',
+      }))
 
       return responseTemplate(HttpStatus.CREATED, `successfully attach seat number ${seatData.seatNumber}`, { data: seat });
 
@@ -143,6 +157,16 @@ export class SeatsService {
 
       await transaction.commit();
 
+      this.eventGateway.server.emit('schedule.management', generateEventPayload({
+        key: 'schedule.management',
+        message: 'Penumpang Berkurang',
+      }));
+      this.eventGateway.server.emit('ticket', generateEventPayload({
+        key: 'ticket',
+        message: 'Tiket Dibatalkan',
+        userId: userId,
+      }))
+
       return responseTemplate(HttpStatus.NO_CONTENT, `detach seat number ${seat.seatNumber} successfully`);
     } catch (err) {
       await transaction.rollback();
@@ -172,7 +196,7 @@ export class SeatsService {
       if (!userId) throw new BadRequestException('seat is not belongs to you');
 
       await foundCurrSeat.update(
-        { userId: null },
+        { userId: undefined },
         { transaction }
       );
 
@@ -210,6 +234,11 @@ export class SeatsService {
       if (!foundSeat) throw new NotFoundException(`seat with id ${seatId} not found`);
 
       await foundSeat.update({ verified: true });
+
+      this.eventGateway.server.emit('ticket', generateEventPayload({
+        key: 'ticket',
+        message: 'Tiket Diverifikasi'
+      }))
 
       return responseTemplate(HttpStatus.OK, 'verified', { data: foundSeat });
     } catch (err) {
