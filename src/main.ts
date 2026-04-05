@@ -12,7 +12,7 @@ async function bootstrap() {
       'http://localhost:3000', 
       'https://buskita.vercel.app',
       'http://localhost:5173',
-      'http://192.168.0.149:5173'
+      'https://5173-firebase-buskita-1770078248486.cluster-aic6jbiihrhmyrqafasatvzbwe.cloudworkstations.dev'
     ]
   });
   
