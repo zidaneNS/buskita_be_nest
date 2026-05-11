@@ -71,12 +71,16 @@ export class RsaService {
       let eValues: number[] = [];
 
       let curr = 2;
-      while (eValues.length < total) {
+      while (eValues.length < total && curr < toitent) {
         if (isPrimeRelative(curr, toitent)) {
           eValues.push(curr);
         }
         curr++;
       }
+
+      this.logger.log('total', total);
+      this.logger.log('eValues.length', eValues.length);
+      if (total > eValues.length) throw new BadRequestException(`cannot greater than total of generated e values: ${eValues.length}`);
 
       return responseTemplate<GenerateEValueResponse>(HttpStatus.OK, 'generate E values', {
         data: {
@@ -89,7 +93,7 @@ export class RsaService {
       const errMessage = generateErrMsg(err);
       this.logger.error(`generateEValue:::ERROR: ${errMessage}`);
       if (err instanceof HttpException) throw err;
-      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(errMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
